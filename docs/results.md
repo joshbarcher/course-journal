@@ -161,6 +161,7 @@ Canvas-based confetti burst. Fired when all steps in a progress-bar bar reach `d
 - State buttons styled with `--state-color` CSS var; active state gets colored border + tinted background via `color-mix()`.
 - Global summary bar at top (colored segments, one per task).
 - Completion detection: fires particles when every task hits `done`.
+- **Drag-to-reorder tasks**: `⠿` handle (absolutely positioned, hover-reveal). Handle `mousedown` sets `row.draggable = true`; `dragend` resets it. This prevents accidental drags when clicking state buttons or editing title. `_persistTaskOrder()` syncs `_page.tasks` from DOM order and saves.
 
 ### Multi-bar progress (`views/progress-bars.js`)
 - Multiple named bars, each containing N step chips.
@@ -169,12 +170,17 @@ Canvas-based confetti burst. Fired when all steps in a progress-bar bar reach `d
 - Bar actions: `⧉` (copy, states reset) + `×` (delete) — both ghost icon buttons, hidden until row hover, revealed with opacity transition.
 - Copy duplicates bar structure with all step states reset to `null`, inserted immediately after the source bar.
 - Completion: fires particles when all chips in a single bar reach `done`.
+- **Drag-to-reorder bars**: `⠿` handle, same handle-only pattern as progress tracker. `_persistBarOrder()` syncs `_page.bars`, refreshes numbers, redraws global bar.
+- **Drag-to-reorder chips**: whole chip is `draggable="true"`. `dragstart` calls `stopPropagation()` so it never triggers a bar drag. Drop only accepted within the same bar (`parentElement` check). `_persistChipOrder(barId)` syncs `bar.steps` from DOM.
 
 ### List (`views/list.js`)
-- Number/bullet circle is clickable to toggle `done` state.
-- Done: strikethrough title, gold circle, `✓` symbol.
-- Subtask chips with inline add input.
-- Items are draggable (HTML5 DnD within the list).
+- **Ordered/unordered toggle**: small `# Ordered` / `• Unordered` button in header. Swaps number circles ↔ empty circles in-place (no full redraw). `ordered` field is included in every save so it persists across reloads.
+- **Number circles**: always show the position number — never replaced by a checkmark. `_renumber()` just sets `textContent = i + 1`.
+- **Bullet circles**: same 48×48px circle style as number circles, empty (no text or `::before` content). Purely decorative — uniform with ordered lists.
+- **Done button**: dedicated `✓` circle button (28px) on the right side of each row. Green (`#4ade80`) when done, transparent/dim when not. Done state: title gets strikethrough + 40% opacity. Number and bullet are unaffected by done state.
+- **Subtask chips**: inline add, drag-to-reorder within same item, drag to a different list item (chip moves to target item's subtask row, both items' arrays synced from DOM in one save).
+- **Item drag**: handle-only (`⠿`, absolutely positioned). `mousedown` on handle sets `el.draggable = true`; `dragend` resets it. This prevents chip drags from accidentally moving whole items.
+- **Cross-item chip drop**: handled in `_setupDragDrop`'s `drop` listener. When `_dragChipSrc` is set and the drop target is a `.list-item`, the chip is moved to that item's subtask row and both items' subtask arrays are synced from DOM.
 
 ### Notes (`views/notes.js`)
 - Masonry 2-column grid (`columns: 2` CSS).
@@ -271,6 +277,12 @@ Gives a subtle tinted background that matches the border color exactly, with no 
 ### Hover-reveal action buttons
 Ghost buttons (`opacity: 0`) become visible on parent hover (`opacity: 1`). On mobile (no hover), set `opacity: 0.6` at the breakpoint so they're always accessible.
 
+### Handle-only drag pattern
+Used for sidebar items, progress tasks, progress-bars bar rows, and list items. The row itself is NOT `draggable` by default. A `⠿` handle element has `mousedown → el.draggable = true`; the row's own `dragend` resets it to `false`. This prevents child interactive elements (chips, contentEditable titles, state buttons) from accidentally triggering a parent drag. The handle can be `position: absolute` so it takes no layout space and doesn't push sibling elements.
+
+### Child drag inside draggable parent
+When chips inside a bar row or list item need their own drag, the chip's `dragstart` calls `e.stopPropagation()` to prevent the parent row's handler from firing. Combined with the handle-only pattern on the parent, the two drag systems are fully independent. A module-level `_dragChipSrc` variable lets sibling event handlers (`dragover`, `drop`) detect which type of drag is active and branch accordingly.
+
 ---
 
 ## What's not built (potential gaps)
@@ -280,7 +292,6 @@ Ghost buttons (`opacity: 0`) become visible on parent hover (`opacity: 1`). On m
 - **Import / export** — no way to export a course to markdown or import from another format
 - **Auth** — no login; intended for single-user self-hosting
 - **Undo** — no undo for deletes or state changes
-- **Page ordering within multi-bar** — bars can't be reordered via drag (only chips within a bar can't be reordered either — state-cycle is click-only)
 
 ---
 
