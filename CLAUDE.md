@@ -1,0 +1,1 @@
+Worktrees should not be used with project updates. Directly make changes to the code in the project.
