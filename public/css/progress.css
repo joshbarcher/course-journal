@@ -258,16 +258,14 @@
     flex-shrink: 0;
     cursor: text;
     -webkit-user-drag: none;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    white-space: normal;
+    word-break: break-word;
+    line-height: 1.35;
 }
 
 .pb-bar-title:focus {
     background: rgba(255, 255, 255, 0.05);
     outline: 1px solid rgba(255, 255, 255, 0.3);
-    white-space: normal;
-    overflow: visible;
 }
 
 .pb-bar-title:empty::before {
