@@ -375,6 +375,7 @@
     justify-content: center;
     transition: border-color var(--transition), color var(--transition);
     flex-shrink: 0;
+    align-self: center;
 }
 
 .pb-chip-add:hover {
