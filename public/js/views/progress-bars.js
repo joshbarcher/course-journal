@@ -2,6 +2,7 @@ import { api } from '../api.js'
 import { escapeHtml } from '../utils.js'
 import { refreshSidebarItem } from '../sidebar.js'
 import { segmentColor, barProgressPercent, percentToColor, globalSegments, stateLabel } from './progress-helpers.js'
+import { fireParticles } from '../particles.js'
 
 const STATE_CYCLE = [null, 'started', 'working', 'done']
 
@@ -25,9 +26,7 @@ function _draw() {
 
     const header = document.createElement('div')
     header.className = 'page-header'
-    header.innerHTML = `
-        <h1 class="page-title">${escapeHtml(_page.title)}</h1>
-        <p class="page-subtitle">Multi-Bar Progress Tracker</p>`
+    header.appendChild(_buildPageTitle('Multi-Bar Progress Tracker'))
     _container.appendChild(header)
 
     const globalBar = document.createElement('div')
@@ -228,10 +227,17 @@ async function _cycleStepState(barId, stepId, chipEl) {
     if (!bar) return
     const step = (bar.steps ?? []).find(s => s.id === stepId)
     if (!step) return
+    const prev = step.state
     const idx = STATE_CYCLE.indexOf(step.state)
     step.state = STATE_CYCLE[(idx + 1) % STATE_CYCLE.length]
     _applyChipState(chipEl, step.state)
     _redrawGlobalBar()
+    if (step.state === 'done' && prev !== 'done') {
+        const steps = bar.steps ?? []
+        if (steps.length > 0 && steps.every(s => s.state === 'done')) {
+            fireParticles(chipEl, bar.title)
+        }
+    }
     await _save()
 }
 
@@ -329,6 +335,30 @@ async function _deleteStep(barId, stepId) {
     _container.querySelector(`.pb-chip[data-step-id="${stepId}"]`)?.remove()
     _redrawGlobalBar()
     await _save()
+}
+
+// ── Page title ────────────────────────────────────────────────────────────────
+
+function _buildPageTitle(subtitle) {
+    const frag = document.createDocumentFragment()
+    const h1 = document.createElement('h1')
+    h1.className = 'page-title page-title--editable'
+    h1.contentEditable = 'true'
+    h1.textContent = _page.title
+    h1.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); h1.blur() } })
+    h1.addEventListener('blur', async () => {
+        const t = h1.textContent.trim()
+        if (!t || t === _page.title) { h1.textContent = _page.title; return }
+        _page.title = t
+        const updated = await api.pages.update(_page.id, { title: t })
+        if (updated) refreshSidebarItem(updated)
+    })
+    frag.appendChild(h1)
+    const sub = document.createElement('p')
+    sub.className = 'page-subtitle'
+    sub.textContent = subtitle
+    frag.appendChild(sub)
+    return frag
 }
 
 // ── Persist ───────────────────────────────────────────────────────────────────

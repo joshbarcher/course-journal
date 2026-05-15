@@ -45,9 +45,7 @@ function _draw() {
 
     const header = document.createElement('div')
     header.className = 'page-header'
-    header.innerHTML = `
-        <h1 class="page-title">${escapeHtml(_page.title)}</h1>
-        <p class="page-subtitle">(${_page.ordered ? 'Ordered List' : 'Unordered List'})</p>`
+    header.appendChild(_buildPageTitle(`(${_page.ordered ? 'Ordered List' : 'Unordered List'})`))
     _container.appendChild(header)
 
     const listEl = document.createElement('div')
@@ -71,7 +69,7 @@ function _draw() {
 
 function buildItemEl(item, position) {
     const el = document.createElement('div')
-    el.className = 'list-item'
+    el.className = 'list-item' + (item.done ? ' list-item--done' : '')
     el.dataset.id = item.id
     el.draggable = true
 
@@ -82,11 +80,15 @@ function buildItemEl(item, position) {
     if (_page.ordered) {
         const num = document.createElement('span')
         num.className = 'list-item-num'
-        num.textContent = position
+        num.textContent = item.done ? '✓' : position
+        num.title = item.done ? 'Mark incomplete' : 'Mark complete'
+        num.addEventListener('click', (e) => { e.stopPropagation(); _toggleDone(item.id, el) })
         mainRow.appendChild(num)
     } else {
         const bullet = document.createElement('span')
         bullet.className = 'list-item-bullet'
+        bullet.title = item.done ? 'Mark incomplete' : 'Mark complete'
+        bullet.addEventListener('click', (e) => { e.stopPropagation(); _toggleDone(item.id, el) })
         mainRow.appendChild(bullet)
     }
 
@@ -182,6 +184,23 @@ function _showSubtaskInput(itemId, row, addBtn) {
 
 // ── Data mutation + save helpers ──────────────────────────────────────────────
 
+async function _toggleDone(itemId, el) {
+    const item = _page.items.find(i => i.id === itemId)
+    if (!item) return
+    item.done = !item.done
+    el.classList.toggle('list-item--done', item.done)
+    // Update the num/bullet indicator
+    const indicator = el.querySelector('.list-item-num, .list-item-bullet')
+    if (indicator) {
+        if (indicator.classList.contains('list-item-num')) {
+            const position = [...el.parentElement.children].indexOf(el) + 1
+            indicator.textContent = item.done ? '✓' : position
+        }
+        indicator.title = item.done ? 'Mark incomplete' : 'Mark complete'
+    }
+    await _save()
+}
+
 async function _saveTitle(itemId, newTitle) {
     const item = _page.items.find(i => i.id === itemId)
     if (!item || item.title === newTitle) return
@@ -226,6 +245,30 @@ async function _removeSubtask(itemId, text) {
     if (!item) return
     item.subtasks = item.subtasks.filter(s => s !== text)
     await _save()
+}
+
+// ── Page title ────────────────────────────────────────────────────────────────
+
+function _buildPageTitle(subtitle) {
+    const frag = document.createDocumentFragment()
+    const h1 = document.createElement('h1')
+    h1.className = 'page-title page-title--editable'
+    h1.contentEditable = 'true'
+    h1.textContent = _page.title
+    h1.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); h1.blur() } })
+    h1.addEventListener('blur', async () => {
+        const t = h1.textContent.trim()
+        if (!t || t === _page.title) { h1.textContent = _page.title; return }
+        _page.title = t
+        const updated = await api.pages.update(_page.id, { title: t })
+        if (updated) refreshSidebarItem(updated)
+    })
+    frag.appendChild(h1)
+    const sub = document.createElement('p')
+    sub.className = 'page-subtitle'
+    sub.textContent = subtitle
+    frag.appendChild(sub)
+    return frag
 }
 
 // ── Save to API ───────────────────────────────────────────────────────────────

@@ -1,10 +1,16 @@
 import { api } from './api.js'
 import { setCourseId } from './course-context.js'
 import { escapeHtml } from './utils.js'
-import { loadSidebar, setActiveItem, getPages } from './sidebar.js'
+import { loadSidebar, setActiveItem, getPages, addPageToSidebar } from './sidebar.js'
 import { renderToc } from './views/toc.js'
 import { renderHeatmap } from './views/heatmap.js'
 import { renderCourses } from './views/courses.js'
+import { newPageDialog, showError } from './dialog.js'
+
+// Lazy import to avoid circular dep (app.js imports router.js)
+function _closeMobile() {
+    import('./app.js').then(m => m.closeMobileSidebar?.())
+}
 
 const _renderers = new Map()
 
@@ -48,6 +54,7 @@ export async function navigate(hash) {
         setCourseId(null)
         setSidebarVisible(false)
         setHash('')
+        _closeMobile()
         await renderCourseList()
         return
     }
@@ -69,6 +76,8 @@ export async function navigate(hash) {
         await loadSidebar(null, navigate, course.title, courseId)
     }
 
+    _closeMobile()
+
     if (route.view === 'course-home') {
         setHash(`c:${courseId}`)
         setActiveItem('home')
@@ -79,7 +88,7 @@ export async function navigate(hash) {
     if (route.view === 'toc') {
         setHash(`c:${courseId}:toc`)
         setActiveItem('toc')
-        renderToc(getPages(), mainEl())
+        renderToc(getPages(), mainEl(), courseId)
         return
     }
 
@@ -99,6 +108,19 @@ function setSidebarVisible(visible) {
     document.getElementById('sidebar').style.display = visible ? '' : 'none'
     const addBtn = document.getElementById('sidebar-add-btn')
     if (addBtn) addBtn.style.display = visible ? '' : 'none'
+}
+
+export async function addNewPage() {
+    if (!_activeCourseId) return
+    const result = await newPageDialog()
+    if (!result) return
+    try {
+        const page = await api.pages.create(result)
+        addPageToSidebar(page)
+        navigate(page.id)
+    } catch (err) {
+        showError(`Failed to create page: ${err.message}`)
+    }
 }
 
 async function renderPageById(id) {

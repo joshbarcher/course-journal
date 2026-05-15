@@ -53,6 +53,19 @@
     font-weight: 700;
     flex-shrink: 0;
     letter-spacing: 0;
+    cursor: pointer;
+    transition: border-color var(--transition), background var(--transition), color var(--transition);
+}
+
+.list-item-num:hover {
+    border-color: var(--clr-accent);
+    color: var(--clr-accent);
+}
+
+.list-item--done .list-item-num {
+    border-color: var(--clr-accent);
+    background: var(--clr-accent-bg);
+    color: var(--clr-accent);
 }
 
 .list-item-bullet {
@@ -65,10 +78,30 @@
     font-size: 26px;
     color: var(--clr-border-hi);
     line-height: 1;
+    cursor: pointer;
+    transition: color var(--transition);
+}
+
+.list-item-bullet:hover {
+    color: var(--clr-accent);
 }
 
 .list-item-bullet::before {
     content: '•';
+}
+
+.list-item--done .list-item-bullet {
+    color: var(--clr-accent);
+}
+
+.list-item--done .list-item-bullet::before {
+    content: '✓';
+}
+
+/* Done: dim the title */
+.list-item--done .list-item-title {
+    opacity: 0.45;
+    text-decoration: line-through;
 }
 
 .list-item-title {

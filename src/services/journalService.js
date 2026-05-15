@@ -97,5 +97,13 @@ export class JournalService {
         await this._mf.set({ pages: current.pages.filter(p => p.id !== id) })
         return true
     }
+
+    async reorder(ids) {
+        const current = this._mf.get()
+        const map = new Map(current.pages.map(p => [p.id, p]))
+        const reordered = ids.map(id => map.get(id)).filter(Boolean)
+        const rest = current.pages.filter(p => !ids.includes(p.id))
+        await this._mf.set({ pages: [...reordered, ...rest] })
+    }
 }
 

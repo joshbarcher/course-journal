@@ -1,5 +1,6 @@
 import { api } from '../api.js'
 import { escapeHtml } from '../utils.js'
+import { refreshSidebarItem } from '../sidebar.js'
 import { parseListItems, applyIndent, renderListItems } from './page-helpers.js'
 
 const TOGGLE_CMDS = [
@@ -43,9 +44,23 @@ function _draw() {
 
     const header = document.createElement('div')
     header.className = 'page-header'
-    header.innerHTML = `
-        <h1 class="page-title">${escapeHtml(_page.title)}</h1>
-        <p class="page-subtitle">Page · Rich Text</p>`
+    const h1 = document.createElement('h1')
+    h1.className = 'page-title page-title--editable'
+    h1.contentEditable = 'true'
+    h1.textContent = _page.title
+    h1.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); h1.blur() } })
+    h1.addEventListener('blur', async () => {
+        const t = h1.textContent.trim()
+        if (!t || t === _page.title) { h1.textContent = _page.title; return }
+        _page.title = t
+        const updated = await api.pages.update(_page.id, { title: t })
+        if (updated) refreshSidebarItem(updated)
+    })
+    header.appendChild(h1)
+    const subtitle = document.createElement('p')
+    subtitle.className = 'page-subtitle'
+    subtitle.textContent = 'Page · Rich Text'
+    header.appendChild(subtitle)
     _container.appendChild(header)
 
     _toolbar = _buildToolbar()

@@ -38,6 +38,18 @@ export async function updatePage(req, res) {
     }
 }
 
+export async function reorderPages(req, res) {
+    const { ids } = req.body ?? {}
+    if (!Array.isArray(ids)) return res.status(400).json({ error: 'ids array required' })
+    try {
+        await req.journal.reorder(ids)
+        res.json({ ok: true })
+    } catch (err) {
+        logger.error('Failed to reorder pages', err)
+        res.status(500).json({ error: 'Failed to reorder pages' })
+    }
+}
+
 export async function deletePage(req, res) {
     try {
         const removed = await req.journal.remove(req.params.id)

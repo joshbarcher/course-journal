@@ -4,7 +4,7 @@ import {
     listCourses, getCourse, createCourse, updateCourse, deleteCourse, copyCourse,
 } from '../controllers/coursesController.js'
 import {
-    listPages, getPage, createPage, updatePage, deletePage,
+    listPages, getPage, createPage, updatePage, deletePage, reorderPages,
 } from '../controllers/pagesController.js'
 
 const router = Router()
@@ -28,11 +28,12 @@ pagesRouter.use((req, res, next) => {
     }
 })
 
-pagesRouter.get('/',       listPages)
-pagesRouter.get('/:id',    getPage)
-pagesRouter.post('/',      createPage)
-pagesRouter.put('/:id',    updatePage)
-pagesRouter.delete('/:id', deletePage)
+pagesRouter.get('/',        listPages)
+pagesRouter.put('/order',   reorderPages)
+pagesRouter.get('/:id',     getPage)
+pagesRouter.post('/',       createPage)
+pagesRouter.put('/:id',     updatePage)
+pagesRouter.delete('/:id',  deletePage)
 
 router.use('/:courseId/pages', pagesRouter)
 

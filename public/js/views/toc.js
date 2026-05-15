@@ -1,11 +1,11 @@
 import { escapeHtml, groupPagesByType } from '../utils.js'
 
-export function renderToc(pages, container) {
+export function renderToc(pages, container, courseId) {
     const groups = groupPagesByType(pages)
 
     const body = groups.length === 0
         ? `<p class="toc-empty">No pages yet — use "+ New Page" to get started.</p>`
-        : groups.map(buildSection).join('')
+        : groups.map(g => buildSection(g, courseId)).join('')
 
     container.innerHTML = `
         <div class="page-header">
@@ -15,12 +15,11 @@ export function renderToc(pages, container) {
         <div class="toc-body">${body}</div>`
 }
 
-function buildSection({ label, pages }) {
-    const items = pages.map(p =>
-        `<li>
-            <a class="toc-link" href="#${p.id}">${escapeHtml(p.title)}</a>
-        </li>`
-    ).join('')
+function buildSection({ label, pages }, courseId) {
+    const items = pages.map(p => {
+        const href = courseId ? `#c:${courseId}:${p.id}` : `#${p.id}`
+        return `<li><a class="toc-link" href="${href}">${escapeHtml(p.title)}</a></li>`
+    }).join('')
 
     return `
         <div class="toc-section">

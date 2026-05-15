@@ -31,11 +31,12 @@ export const api = {
         copy:   (id)       => request('POST',   `/courses/${id}/copy`),
     },
     pages: {
-        list:   ()         => request('GET',    pagesBase()),
-        get:    (id)       => request('GET',    `${pagesBase()}/${id}`),
-        create: (body)     => request('POST',   pagesBase(), body),
-        update: (id, body) => request('PUT',    `${pagesBase()}/${id}`, body),
-        remove: (id)       => request('DELETE', `${pagesBase()}/${id}`),
+        list:    ()         => request('GET',    pagesBase()),
+        get:     (id)       => request('GET',    `${pagesBase()}/${id}`),
+        create:  (body)     => request('POST',   pagesBase(), body),
+        update:  (id, body) => request('PUT',    `${pagesBase()}/${id}`, body),
+        remove:  (id)       => request('DELETE', `${pagesBase()}/${id}`),
+        reorder: (ids)      => request('PUT',    `${pagesBase()}/order`, { ids }),
     },
     pagesFor: (courseId) => ({
         list: () => request('GET', `/courses/${courseId}/pages`),

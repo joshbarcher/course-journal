@@ -1,6 +1,7 @@
 import { api } from '../api.js'
 import { escapeHtml } from '../utils.js'
 import { heatmapRows } from './progress-helpers.js'
+import { confirmDialog, inputDialog, showError } from '../dialog.js'
 
 export function renderCourses(courses, container, onNavigate) {
     container.innerHTML = ''
@@ -29,13 +30,13 @@ export function renderCourses(courses, container, onNavigate) {
     addBtn.className = 'courses-add-btn'
     addBtn.textContent = '+ New Course'
     addBtn.addEventListener('click', async () => {
-        const title = prompt('Course name:')
-        if (!title?.trim()) return
+        const title = await inputDialog('New Course', 'Course name…')
+        if (!title) return
         try {
-            const course = await api.courses.create({ title: title.trim() })
+            const course = await api.courses.create({ title })
             onNavigate(`c:${course.id}`)
         } catch (err) {
-            alert(`Failed to create course: ${err.message}`)
+            showError(`Failed to create course: ${err.message}`)
         }
     })
     container.appendChild(addBtn)
@@ -62,14 +63,14 @@ function buildCourseCard(course, onNavigate) {
     renameBtn.textContent = 'Rename'
     renameBtn.addEventListener('click', async (e) => {
         e.stopPropagation()
-        const newTitle = prompt('New name:', course.title)
-        if (!newTitle?.trim() || newTitle.trim() === course.title) return
+        const newTitle = await inputDialog('Rename Course', 'Course name…', course.title)
+        if (!newTitle || newTitle === course.title) return
         try {
-            await api.courses.update(course.id, { title: newTitle.trim() })
-            course.title = newTitle.trim()
-            nameEl.textContent = course.title
+            await api.courses.update(course.id, { title: newTitle })
+            course.title = newTitle
+            nameEl.textContent = newTitle
         } catch (err) {
-            alert(`Failed to rename: ${err.message}`)
+            showError(`Failed to rename: ${err.message}`)
         }
     })
 
@@ -84,7 +85,7 @@ function buildCourseCard(course, onNavigate) {
             const copy = await api.courses.copy(course.id)
             onNavigate(`c:${copy.id}`)
         } catch (err) {
-            alert(`Failed to copy: ${err.message}`)
+            showError(`Failed to copy: ${err.message}`)
             copyBtn.textContent = 'Copy'
             copyBtn.disabled = false
         }
@@ -101,7 +102,7 @@ function buildCourseCard(course, onNavigate) {
             await api.courses.remove(course.id)
             card.remove()
         } catch (err) {
-            alert(`Failed to delete: ${err.message}`)
+            showError(`Failed to delete: ${err.message}`)
         }
     })
 
@@ -115,59 +116,6 @@ function buildCourseCard(course, onNavigate) {
     loadMiniHeatmap(course.id, heatEl)
 
     return card
-}
-
-function confirmDialog(title, body, confirmLabel = 'Confirm') {
-    return new Promise(resolve => {
-        const overlay = document.createElement('div')
-        overlay.className = 'dialog-overlay'
-
-        const box = document.createElement('div')
-        box.className = 'dialog-box'
-
-        const titleEl = document.createElement('div')
-        titleEl.className = 'dialog-title'
-        titleEl.textContent = title
-
-        const bodyEl = document.createElement('div')
-        bodyEl.className = 'dialog-body'
-        bodyEl.textContent = body
-
-        const actions = document.createElement('div')
-        actions.className = 'dialog-actions'
-
-        const cancelBtn = document.createElement('button')
-        cancelBtn.className = 'dialog-btn dialog-btn--cancel'
-        cancelBtn.textContent = 'Cancel'
-
-        const confirmBtn = document.createElement('button')
-        confirmBtn.className = 'dialog-btn dialog-btn--confirm'
-        confirmBtn.textContent = confirmLabel
-
-        const close = (result) => {
-            overlay.remove()
-            resolve(result)
-        }
-
-        cancelBtn.addEventListener('click', () => close(false))
-        confirmBtn.addEventListener('click', () => close(true))
-        overlay.addEventListener('click', (e) => { if (e.target === overlay) close(false) })
-        document.addEventListener('keydown', function onKey(e) {
-            if (e.key === 'Escape') { close(false); document.removeEventListener('keydown', onKey) }
-            if (e.key === 'Enter')  { close(true);  document.removeEventListener('keydown', onKey) }
-        })
-
-        actions.appendChild(cancelBtn)
-        actions.appendChild(confirmBtn)
-        box.appendChild(titleEl)
-        box.appendChild(bodyEl)
-        box.appendChild(actions)
-        overlay.appendChild(box)
-        document.body.appendChild(overlay)
-
-        // Focus confirm so Enter works immediately
-        confirmBtn.focus()
-    })
 }
 
 async function loadMiniHeatmap(courseId, container) {

@@ -383,6 +383,62 @@
     color: var(--clr-text);
 }
 
+/* ── Mobile ───────────────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+    /* Global bar: wrap segments onto multiple rows */
+    .progress-global-bar {
+        flex-wrap: wrap;
+    }
+
+    .progress-global-seg {
+        flex: 0 0 44px;
+    }
+
+    /* Bar rows: stack chips below the title row */
+    .pb-bar-row {
+        flex-wrap: wrap;
+        align-items: flex-start;
+    }
+
+    .pb-bar-num {
+        flex-shrink: 0;
+    }
+
+    .pb-bar-title {
+        flex: 1;
+        min-width: 0;
+        width: auto;
+    }
+
+    /* Chips fill the full row below num+title+actions */
+    .pb-chips {
+        flex-basis: 100%;
+        order: 10;
+        margin-top: 8px;
+    }
+
+    /* Always show delete button (no hover on touch) */
+    .pb-del-btn {
+        opacity: 0.6;
+    }
+
+    /* Progress tracker tasks: wrap state buttons below title */
+    .progress-task {
+        flex-wrap: wrap;
+    }
+
+    .progress-state-btns {
+        flex-basis: 100%;
+        order: 10;
+        margin-top: 8px;
+        justify-content: flex-start;
+    }
+
+    .progress-task-delete {
+        opacity: 0.6;
+    }
+}
+
 /* ── Copy / Delete bar buttons ────────────────────────────────────────────────── */
 .pb-copy-btn {
     font-size: 11px;

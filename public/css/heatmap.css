@@ -61,3 +61,17 @@
     border: 1px dashed var(--clr-border);
     cursor: default;
 }
+
+@media (max-width: 768px) {
+    .heatmap-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+    }
+
+    .heatmap-label {
+        width: auto;
+        min-width: 0;
+        white-space: normal;
+    }
+}

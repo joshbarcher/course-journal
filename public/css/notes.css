@@ -55,6 +55,11 @@
     border-color: var(--clr-border-hi);
 }
 
+.notes-card--editing {
+    border-color: var(--clr-border-hi);
+    outline: 1px solid var(--clr-border-hi);
+}
+
 .notes-card-text {
     font-size: 13.5px;
     line-height: 1.65;
@@ -62,6 +67,10 @@
     word-break: break-word;
     margin: 0;
     padding-right: 20px;
+    outline: none;
+    cursor: text;
+    border-radius: 2px;
+    min-height: 1em;
 }
 
 /* ── Delete button ────────────────────────────────────────────────────────────── */

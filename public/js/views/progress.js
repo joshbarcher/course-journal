@@ -2,6 +2,7 @@ import { api } from '../api.js'
 import { escapeHtml } from '../utils.js'
 import { refreshSidebarItem } from '../sidebar.js'
 import { segmentColor, globalSegments } from './progress-helpers.js'
+import { fireParticles } from '../particles.js'
 
 const STATES = ['started', 'working', 'done']
 const STATE_LABELS = { started: 'STARTED', working: 'WORKING', done: 'DONE' }
@@ -26,9 +27,7 @@ function _draw() {
 
     const header = document.createElement('div')
     header.className = 'page-header'
-    header.innerHTML = `
-        <h1 class="page-title">${escapeHtml(_page.title)}</h1>
-        <p class="page-subtitle">Progress Tracker</p>`
+    header.appendChild(_buildPageTitle('Progress Tracker'))
     _container.appendChild(header)
 
     const globalBar = document.createElement('div')
@@ -113,7 +112,7 @@ function _buildTaskEl(task) {
         btn.textContent = STATE_LABELS[state]
         if (task.state === state) btn.classList.add('active')
         btn.style.setProperty('--state-color', segmentColor(state))
-        btn.addEventListener('click', () => _onStateClick(task.id, state))
+        btn.addEventListener('click', e => _onStateClick(task.id, state, e.currentTarget))
         btns.appendChild(btn)
     }
     el.appendChild(btns)
@@ -140,12 +139,19 @@ function _refreshTaskEl(taskId) {
 
 // ── Interactions ──────────────────────────────────────────────────────────────
 
-async function _onStateClick(taskId, state) {
+async function _onStateClick(taskId, state, btnEl) {
     const task = (_page.tasks ?? []).find(t => t.id === taskId)
     if (!task) return
+    const prev = task.state
     task.state = task.state === state ? null : state
     _refreshTaskEl(taskId)
     _redrawGlobalBar()
+    if (task.state === 'done' && prev !== 'done') {
+        const tasks = _page.tasks ?? []
+        if (tasks.length > 0 && tasks.every(t => t.state === 'done')) {
+            fireParticles(btnEl, _page.title)
+        }
+    }
     await _save()
 }
 
@@ -183,6 +189,30 @@ async function _deleteTask(taskId) {
     el?.remove()
     _redrawGlobalBar()
     await _save()
+}
+
+// ── Page title ────────────────────────────────────────────────────────────────
+
+function _buildPageTitle(subtitle) {
+    const frag = document.createDocumentFragment()
+    const h1 = document.createElement('h1')
+    h1.className = 'page-title page-title--editable'
+    h1.contentEditable = 'true'
+    h1.textContent = _page.title
+    h1.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); h1.blur() } })
+    h1.addEventListener('blur', async () => {
+        const t = h1.textContent.trim()
+        if (!t || t === _page.title) { h1.textContent = _page.title; return }
+        _page.title = t
+        const updated = await api.pages.update(_page.id, { title: t })
+        if (updated) refreshSidebarItem(updated)
+    })
+    frag.appendChild(h1)
+    const sub = document.createElement('p')
+    sub.className = 'page-subtitle'
+    sub.textContent = subtitle
+    frag.appendChild(sub)
+    return frag
 }
 
 // ── Persist ───────────────────────────────────────────────────────────────────

@@ -36,12 +36,16 @@
 
 /* ── Page items ─────────────────────────────────────────────────────────────── */
 .sidebar-item {
-    padding: 11px 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 9px 10px 9px 6px;
     border: 1px solid var(--clr-border);
     border-radius: var(--radius);
-    cursor: pointer;
-    transition: border-color var(--transition), background var(--transition);
+    cursor: default;
+    transition: border-color var(--transition), background var(--transition), opacity var(--transition);
     user-select: none;
+    position: relative;
 }
 
 .sidebar-item:hover {
@@ -56,6 +60,90 @@
 
 .sidebar-item.active .sidebar-item-title {
     color: var(--clr-accent);
+}
+
+.sidebar-item--dragging {
+    opacity: 0.45;
+}
+
+.sidebar-item--drag-over {
+    border-color: var(--clr-accent) !important;
+    background: var(--clr-accent-bg) !important;
+}
+
+/* Drag handle */
+.sidebar-drag-handle {
+    font-size: 14px;
+    line-height: 1;
+    color: var(--clr-text-muted);
+    opacity: 0;
+    cursor: grab;
+    flex-shrink: 0;
+    padding: 0 2px;
+    transition: opacity var(--transition);
+}
+
+.sidebar-item:hover .sidebar-drag-handle {
+    opacity: 0.5;
+}
+
+.sidebar-drag-handle:active {
+    cursor: grabbing;
+    opacity: 1 !important;
+}
+
+/* Content area (takes remaining space) */
+.sidebar-item-content {
+    flex: 1;
+    min-width: 0;
+    cursor: pointer;
+}
+
+/* Duplicate button */
+.sidebar-item-dup {
+    font-size: 13px;
+    line-height: 1;
+    color: var(--clr-text-muted);
+    opacity: 0;
+    flex-shrink: 0;
+    padding: 0 3px;
+    transition: opacity var(--transition), color var(--transition);
+}
+
+.sidebar-item:hover .sidebar-item-dup {
+    opacity: 0.55;
+}
+
+.sidebar-item-dup:hover {
+    opacity: 1 !important;
+    color: var(--clr-text);
+}
+
+/* Delete button */
+.sidebar-item-delete {
+    font-size: 16px;
+    line-height: 1;
+    color: var(--clr-text-muted);
+    opacity: 0;
+    flex-shrink: 0;
+    padding: 0 3px;
+    transition: opacity var(--transition), color var(--transition);
+}
+
+.sidebar-item:hover .sidebar-item-delete {
+    opacity: 0.55;
+}
+
+.sidebar-item-delete:hover {
+    opacity: 1 !important;
+    color: #dc5050;
+}
+
+/* Keyboard focus ring on sidebar items */
+.sidebar-item:focus-visible,
+.sidebar-toc-btn:focus-visible {
+    outline: 1.5px solid var(--clr-accent);
+    outline-offset: 1px;
 }
 
 /* ── Item title ─────────────────────────────────────────────────────────────── */
@@ -93,6 +181,11 @@
 .sidebar-item.active .sidebar-badge {
     border-color: var(--clr-accent);
     color: var(--clr-accent);
+}
+
+.sidebar-badge--done {
+    border-color: var(--clr-accent) !important;
+    color: var(--clr-accent) !important;
 }
 
 /* ── Mini progress bar (progress pages) ─────────────────────────────────────── */
