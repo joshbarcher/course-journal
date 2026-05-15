@@ -1,8 +1,8 @@
 /* ── Design tokens ─────────────────────────────────────────────────────────── */
 :root {
-    --clr-bg:           #0c0c0c;
-    --clr-bg-raised:    #141414;
-    --clr-bg-hover:     #1c1c1c;
+    --clr-bg:           #1a1917;
+    --clr-bg-raised:    #222120;
+    --clr-bg-hover:     #2a2928;
     --clr-border:       rgba(255, 255, 255, 0.28);
     --clr-border-hi:    rgba(255, 255, 255, 0.55);
     --clr-border-act:   #c9a84c;
