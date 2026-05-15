@@ -4,7 +4,7 @@
     flex-direction: column;
     gap: 14px;
     margin-bottom: 18px;
-    max-width: 760px;
+    max-width: 100%;
 }
 
 /* ── Item card ───────────────────────────────────────────────────────────────── */
@@ -215,7 +215,7 @@
 
 /* ── Add item button ─────────────────────────────────────────────────────────── */
 .list-add-btn {
-    max-width: 760px;
+    max-width: 100%;
     width: 100%;
     padding: 11px 16px;
     border: 1px dashed var(--clr-border);

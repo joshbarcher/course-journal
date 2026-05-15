@@ -2,7 +2,7 @@
 .progress-global-bar {
     display: flex;
     gap: 4px;
-    max-width: 760px;
+    max-width: 100%;
     margin-bottom: 28px;
     min-height: 44px;
     align-items: stretch;
@@ -53,7 +53,7 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
-    max-width: 760px;
+    max-width: 100%;
     margin-bottom: 4px;
 }
 
@@ -147,7 +147,7 @@
 
 /* ── Add task / step buttons ──────────────────────────────────────────────────── */
 .progress-add-btn {
-    max-width: 760px;
+    max-width: 100%;
     width: 100%;
     padding: 10px 16px;
     border: 1px dashed var(--clr-border);
@@ -168,7 +168,7 @@
 
 /* ── Notes ────────────────────────────────────────────────────────────────────── */
 .progress-notes-wrap {
-    max-width: 760px;
+    max-width: 100%;
     margin-top: 8px;
 }
 
@@ -204,7 +204,7 @@
 
 /* ── Multi-bar layout container ───────────────────────────────────────────────── */
 .pb-body {
-    max-width: 760px;
+    max-width: 100%;
 }
 
 .pb-body .progress-add-btn,
@@ -278,15 +278,16 @@
 /* ── Step chips ───────────────────────────────────────────────────────────────── */
 .pb-chips {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     gap: 5px;
     flex: 1;
-    align-items: center;
+    align-items: stretch;
 }
 
 .pb-chip {
     position: relative;
-    min-width: 64px;
+    flex: 1;
+    min-width: 0;
     min-height: 48px;
     border-radius: 4px;
     padding: 6px 8px;
@@ -411,6 +412,7 @@
     /* Chips fill the full row below num+title+actions */
     .pb-chips {
         flex-basis: 100%;
+        flex-wrap: nowrap;
         order: 10;
         margin-top: 8px;
     }

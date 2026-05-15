@@ -3,7 +3,7 @@
     display: flex;
     align-items: center;
     gap: 4px;
-    max-width: 760px;
+    max-width: 100%;
     padding: 7px 10px;
     background: var(--clr-bg-raised);
     border: 1px solid var(--clr-border);
@@ -75,7 +75,7 @@
 
 /* ── Editor area ──────────────────────────────────────────────────────────────── */
 .rt-editor {
-    max-width: 760px;
+    max-width: 100%;
     min-height: 480px;
     background: var(--clr-bg-raised);
     border: 1px solid var(--clr-border);
