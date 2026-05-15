@@ -11,6 +11,7 @@ const STATE_LABELS = { started: 'STARTED', working: 'WORKING', done: 'DONE' }
 
 let _page = null
 let _container = null
+let _dragTaskSrc = null
 
 // ── Entry point ───────────────────────────────────────────────────────────────
 
@@ -94,6 +95,13 @@ function _buildTaskEl(task) {
     el.className = 'progress-task'
     el.dataset.id = task.id
 
+    const handle = document.createElement('div')
+    handle.className = 'progress-task-handle'
+    handle.textContent = '⠿'
+    handle.title = 'Drag to reorder'
+    handle.addEventListener('mousedown', () => { el.draggable = true })
+    el.appendChild(handle)
+
     const titleEl = document.createElement('div')
     titleEl.className = 'progress-task-title'
     titleEl.contentEditable = 'true'
@@ -124,7 +132,54 @@ function _buildTaskEl(task) {
     del.addEventListener('click', () => _deleteTask(task.id))
     el.appendChild(del)
 
+    _attachTaskDrag(el)
+
     return el
+}
+
+// ── Task drag-to-reorder ──────────────────────────────────────────────────────
+
+function _attachTaskDrag(el) {
+    el.addEventListener('dragstart', (e) => {
+        _dragTaskSrc = el
+        el.classList.add('progress-task--dragging')
+        e.dataTransfer.effectAllowed = 'move'
+    })
+    el.addEventListener('dragend', () => {
+        el.draggable = false
+        el.classList.remove('progress-task--dragging')
+        _container.querySelectorAll('.progress-task--drag-over').forEach(x => x.classList.remove('progress-task--drag-over'))
+        _dragTaskSrc = null
+        _persistTaskOrder()
+    })
+    el.addEventListener('dragover', (e) => {
+        if (!_dragTaskSrc || _dragTaskSrc === el) return
+        e.preventDefault()
+        e.dataTransfer.dropEffect = 'move'
+        _container.querySelectorAll('.progress-task--drag-over').forEach(x => x.classList.remove('progress-task--drag-over'))
+        el.classList.add('progress-task--drag-over')
+    })
+    el.addEventListener('dragleave', (e) => {
+        if (!el.contains(e.relatedTarget)) el.classList.remove('progress-task--drag-over')
+    })
+    el.addEventListener('drop', (e) => {
+        if (!_dragTaskSrc || _dragTaskSrc === el) return
+        e.preventDefault()
+        el.classList.remove('progress-task--drag-over')
+        const list = _container.querySelector('[data-role="task-list"]')
+        const items = [...list.querySelectorAll('.progress-task')]
+        if (items.indexOf(_dragTaskSrc) < items.indexOf(el)) el.after(_dragTaskSrc)
+        else el.before(_dragTaskSrc)
+    })
+}
+
+async function _persistTaskOrder() {
+    const list = _container.querySelector('[data-role="task-list"]')
+    const ids = [...list.querySelectorAll('.progress-task')].map(el => el.dataset.id)
+    const map = new Map((_page.tasks ?? []).map(t => [t.id, t]))
+    _page.tasks = ids.map(id => map.get(id)).filter(Boolean)
+    _redrawGlobalBar()
+    await _save()
 }
 
 function _refreshTaskEl(taskId) {

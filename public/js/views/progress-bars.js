@@ -10,6 +10,8 @@ const STATE_CYCLE = [null, 'started', 'working', 'done']
 
 let _page = null
 let _container = null
+let _dragBarSrc  = null
+let _dragChipSrc = null
 
 // ── Entry point ───────────────────────────────────────────────────────────────
 
@@ -97,6 +99,14 @@ function _buildBarRow(bar) {
     row.className = 'pb-bar-row'
     row.dataset.barId = bar.id
 
+    // Drag handle
+    const handle = document.createElement('div')
+    handle.className = 'pb-bar-handle'
+    handle.textContent = '⠿'
+    handle.title = 'Drag to reorder'
+    handle.addEventListener('mousedown', () => { row.draggable = true })
+    row.appendChild(handle)
+
     // Number
     const num = document.createElement('div')
     num.className = 'pb-bar-num'
@@ -144,6 +154,8 @@ function _buildBarRow(bar) {
     delBtn.setAttribute('aria-label', 'Delete bar')
     delBtn.addEventListener('click', () => _deleteBar(bar.id))
     row.appendChild(delBtn)
+
+    _attachBarDrag(row)
 
     return row
 }
@@ -193,7 +205,6 @@ function _buildChip(barId, step) {
         if (e.key === 'Escape') { e.target.blur() }
     })
 
-    // Delete on right-click context (or long press) — skip for now; show × on hover
     const del = document.createElement('button')
     del.className = 'pb-chip-del'
     del.innerHTML = '&times;'
@@ -201,7 +212,103 @@ function _buildChip(barId, step) {
     del.addEventListener('click', e => { e.stopPropagation(); _deleteStep(barId, step.id) })
     chip.appendChild(del)
 
+    _attachChipDrag(chip, barId)
+
     return chip
+}
+
+// ── Bar drag-to-reorder ───────────────────────────────────────────────────────
+
+function _attachBarDrag(row) {
+    row.addEventListener('dragstart', (e) => {
+        _dragBarSrc = row
+        row.classList.add('pb-bar-row--dragging')
+        e.dataTransfer.effectAllowed = 'move'
+    })
+    row.addEventListener('dragend', () => {
+        row.draggable = false
+        row.classList.remove('pb-bar-row--dragging')
+        _container.querySelectorAll('.pb-bar-row--drag-over').forEach(x => x.classList.remove('pb-bar-row--drag-over'))
+        _dragBarSrc = null
+        _persistBarOrder()
+    })
+    row.addEventListener('dragover', (e) => {
+        if (!_dragBarSrc || _dragBarSrc === row || _dragChipSrc) return
+        e.preventDefault()
+        e.dataTransfer.dropEffect = 'move'
+        _container.querySelectorAll('.pb-bar-row--drag-over').forEach(x => x.classList.remove('pb-bar-row--drag-over'))
+        row.classList.add('pb-bar-row--drag-over')
+    })
+    row.addEventListener('dragleave', (e) => {
+        if (!row.contains(e.relatedTarget)) row.classList.remove('pb-bar-row--drag-over')
+    })
+    row.addEventListener('drop', (e) => {
+        if (!_dragBarSrc || _dragBarSrc === row || _dragChipSrc) return
+        e.preventDefault()
+        row.classList.remove('pb-bar-row--drag-over')
+        const list = _container.querySelector('[data-role="bars-list"]')
+        const rows = [...list.querySelectorAll('.pb-bar-row')]
+        if (rows.indexOf(_dragBarSrc) < rows.indexOf(row)) row.after(_dragBarSrc)
+        else row.before(_dragBarSrc)
+    })
+}
+
+async function _persistBarOrder() {
+    const list = _container.querySelector('[data-role="bars-list"]')
+    const ids = [...list.querySelectorAll('.pb-bar-row')].map(r => r.dataset.barId)
+    const map = new Map((_page.bars ?? []).map(b => [b.id, b]))
+    _page.bars = ids.map(id => map.get(id)).filter(Boolean)
+    _refreshBarNums()
+    _redrawGlobalBar()
+    await _save()
+}
+
+// ── Chip drag-to-reorder ──────────────────────────────────────────────────────
+
+function _attachChipDrag(chip, barId) {
+    chip.draggable = true
+    chip.addEventListener('dragstart', (e) => {
+        e.stopPropagation()
+        _dragChipSrc = chip
+        chip.classList.add('pb-chip--dragging')
+        e.dataTransfer.effectAllowed = 'move'
+    })
+    chip.addEventListener('dragend', () => {
+        chip.classList.remove('pb-chip--dragging')
+        _container.querySelectorAll('.pb-chip--drag-over').forEach(x => x.classList.remove('pb-chip--drag-over'))
+        _dragChipSrc = null
+        _persistChipOrder(barId)
+    })
+    chip.addEventListener('dragover', (e) => {
+        if (!_dragChipSrc || _dragChipSrc === chip) return
+        e.preventDefault()
+        e.stopPropagation()
+        e.dataTransfer.dropEffect = 'move'
+        _container.querySelectorAll('.pb-chip--drag-over').forEach(x => x.classList.remove('pb-chip--drag-over'))
+        chip.classList.add('pb-chip--drag-over')
+    })
+    chip.addEventListener('dragleave', () => chip.classList.remove('pb-chip--drag-over'))
+    chip.addEventListener('drop', (e) => {
+        if (!_dragChipSrc || _dragChipSrc === chip) return
+        e.preventDefault()
+        e.stopPropagation()
+        chip.classList.remove('pb-chip--drag-over')
+        if (_dragChipSrc.parentElement !== chip.parentElement) return
+        const chips = [...chip.parentElement.querySelectorAll('.pb-chip')]
+        if (chips.indexOf(_dragChipSrc) < chips.indexOf(chip)) chip.after(_dragChipSrc)
+        else chip.before(_dragChipSrc)
+    })
+}
+
+async function _persistChipOrder(barId) {
+    const row = _container.querySelector(`.pb-bar-row[data-bar-id="${barId}"]`)
+    if (!row) return
+    const ids = [...row.querySelectorAll('.pb-chip')].map(c => c.dataset.stepId)
+    const bar = (_page.bars ?? []).find(b => b.id === barId)
+    if (!bar) return
+    const map = new Map((bar.steps ?? []).map(s => [s.id, s]))
+    bar.steps = ids.map(id => map.get(id)).filter(Boolean)
+    await _save()
 }
 
 function _applyChipState(chip, state) {

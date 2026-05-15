@@ -1,8 +1,30 @@
+/* ── List type toggle ────────────────────────────────────────────────────────── */
+.list-type-row {
+    margin-top: 6px;
+}
+
+.list-type-toggle {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--clr-text-muted);
+    padding: 3px 10px;
+    border: 1px solid var(--clr-border);
+    border-radius: 3px;
+    transition: border-color var(--transition), color var(--transition);
+}
+
+.list-type-toggle:hover {
+    border-color: var(--clr-accent);
+    color: var(--clr-accent);
+}
+
 /* ── Item list container ─────────────────────────────────────────────────────── */
 .list-items {
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: 12px;
     margin-bottom: 18px;
     max-width: 100%;
 }
@@ -11,22 +33,16 @@
 .list-item {
     border: 1px solid var(--clr-border);
     border-radius: var(--radius);
-    padding: 14px 16px 12px;
+    overflow: hidden;
     transition: border-color var(--transition);
-    cursor: grab;
 }
 
 .list-item:hover {
     border-color: var(--clr-border-hi);
 }
 
-.list-item:active {
-    cursor: grabbing;
-}
-
 .list-item.dragging {
     opacity: 0.35;
-    cursor: grabbing;
 }
 
 .list-item.drag-over {
@@ -34,88 +50,108 @@
     background: var(--clr-accent-bg);
 }
 
-/* ── Main row: number/bullet + title + delete ────────────────────────────────── */
+/* ── Main row ────────────────────────────────────────────────────────────────── */
 .list-item-main {
+    position: relative;
     display: flex;
     align-items: center;
     gap: 16px;
+    padding: 14px 14px 14px 16px;
 }
 
+.list-item-handle {
+    position: absolute;
+    left: -2px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 14px;
+    color: var(--clr-text-muted);
+    cursor: grab;
+    padding: 6px 3px;
+    opacity: 0;
+    transition: opacity var(--transition);
+    line-height: 1;
+    user-select: none;
+    z-index: 1;
+}
+
+.list-item:hover .list-item-handle {
+    opacity: 1;
+}
+
+.list-item-handle:active {
+    cursor: grabbing;
+}
+
+/* ── Number circle ───────────────────────────────────────────────────────────── */
 .list-item-num {
-    width: 50px;
-    height: 50px;
+    width: 48px;
+    height: 48px;
     border-radius: 50%;
-    border: 1.5px solid var(--clr-border-hi);
+    border: 2px solid var(--clr-border-hi);
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 18px;
     font-weight: 700;
     flex-shrink: 0;
-    letter-spacing: 0;
     cursor: pointer;
     transition: border-color var(--transition), background var(--transition), color var(--transition);
 }
 
 .list-item-num:hover {
-    border-color: var(--clr-accent);
-    color: var(--clr-accent);
+    border-color: var(--clr-border-hi);
 }
 
-.list-item--done .list-item-num {
-    border-color: var(--clr-accent);
-    background: var(--clr-accent-bg);
-    color: var(--clr-accent);
-}
-
+/* ── Bullet (empty circle, matches number circle) ────────────────────────────── */
 .list-item-bullet {
-    width: 50px;
-    height: 50px;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: 2px solid var(--clr-border-hi);
+    flex-shrink: 0;
+}
+
+/* ── Done button ─────────────────────────────────────────────────────────────── */
+.list-item-done-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 2px solid var(--clr-border-hi);
     display: flex;
     align-items: center;
     justify-content: center;
+    font-size: 14px;
+    font-weight: 700;
+    color: transparent;
     flex-shrink: 0;
-    font-size: 26px;
-    color: var(--clr-border-hi);
-    line-height: 1;
     cursor: pointer;
-    transition: color var(--transition);
+    transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
 }
 
-.list-item-bullet:hover {
-    color: var(--clr-accent);
+.list-item-done-btn:hover {
+    border-color: #4ade80;
+    color: #4ade80;
 }
 
-.list-item-bullet::before {
-    content: '•';
+.list-item-done-btn.done {
+    border-color: #4ade80;
+    background: rgba(74, 222, 128, 0.15);
+    color: #4ade80;
 }
 
-.list-item--done .list-item-bullet {
-    color: var(--clr-accent);
-}
-
-.list-item--done .list-item-bullet::before {
-    content: '✓';
-}
-
-/* Done: dim the title */
-.list-item--done .list-item-title {
-    opacity: 0.45;
-    text-decoration: line-through;
-}
-
+/* ── Title ───────────────────────────────────────────────────────────────────── */
 .list-item-title {
     flex: 1;
-    font-size: 15px;
-    font-weight: 600;
-    line-height: 1.4;
+    font-size: 17px;
+    font-weight: 700;
+    line-height: 1.35;
     outline: none;
     border-radius: 2px;
     padding: 3px 5px;
     word-break: break-word;
     min-width: 0;
     cursor: text;
-    /* prevent dragging the item when clicking the title */
     -webkit-user-drag: none;
 }
 
@@ -131,6 +167,12 @@
     font-weight: 400;
 }
 
+.list-item--done .list-item-title {
+    opacity: 0.4;
+    text-decoration: line-through;
+}
+
+/* ── Delete button ───────────────────────────────────────────────────────────── */
 .list-item-delete {
     opacity: 0;
     padding: 5px 9px;
@@ -150,28 +192,54 @@
     color: var(--clr-text);
 }
 
-/* ── Subtasks row ────────────────────────────────────────────────────────────── */
+/* ── Subtasks row — hangs below main row ─────────────────────────────────────── */
 .list-subtasks {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 6px;
-    margin-top: 10px;
+    gap: 0;
+    border-top: 1px solid var(--clr-border);
 }
 
+.list-subtasks:not(:has(.subtask-chip)) {
+    border-top: none;
+}
+
+.list-subtasks .subtask-chip,
+.list-subtasks .subtask-add-btn,
+.list-subtasks .subtask-input {
+    margin: 0;
+}
+
+/* ── Subtask chips ───────────────────────────────────────────────────────────── */
 .subtask-chip {
     display: inline-flex;
     align-items: center;
-    gap: 5px;
-    padding: 4px 9px;
-    border: 1px solid var(--clr-border);
-    border-radius: 3px;
-    font-size: 12.5px;
-    transition: border-color var(--transition);
+    gap: 6px;
+    padding: 8px 12px;
+    border-right: 1px solid var(--clr-border);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: grab;
+    transition: background var(--transition), color var(--transition);
+}
+
+.subtask-chip:first-child {
+    border-left: none;
 }
 
 .subtask-chip:hover {
-    border-color: var(--clr-border-hi);
+    background: var(--clr-bg-hover);
+    color: var(--clr-text);
+}
+
+.subtask-chip--dragging {
+    opacity: 0.35;
+}
+
+.subtask-chip--drag-over {
+    border-color: var(--clr-accent);
+    background: var(--clr-accent-bg);
 }
 
 .subtask-chip-remove {
@@ -189,7 +257,7 @@
 .subtask-add-btn {
     font-size: 12px;
     color: var(--clr-text-muted);
-    padding: 4px 6px;
+    padding: 8px 12px;
     transition: color var(--transition);
 }
 
@@ -198,19 +266,19 @@
 }
 
 .subtask-input {
-    background: var(--clr-bg-raised);
-    border: 1px solid var(--clr-border-hi);
-    border-radius: 3px;
+    background: transparent;
+    border: none;
+    border-right: 1px solid var(--clr-border);
     color: var(--clr-text);
     font-family: var(--font-ui);
-    font-size: 12.5px;
-    padding: 4px 9px;
+    font-size: 13px;
+    padding: 8px 12px;
     outline: none;
-    width: 130px;
+    width: 140px;
 }
 
 .subtask-input:focus {
-    border-color: var(--clr-accent);
+    background: var(--clr-bg-hover);
 }
 
 /* ── Add item button ─────────────────────────────────────────────────────────── */

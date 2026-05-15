@@ -19,6 +19,7 @@ export function reorderItems(items, fromIdx, toIdx) {
 
 let _page = null
 let _container = null
+let _dragChipSrc = null
 
 // ── Entry point ───────────────────────────────────────────────────────────────
 
@@ -45,7 +46,7 @@ function _draw() {
 
     const header = document.createElement('div')
     header.className = 'page-header'
-    header.appendChild(_buildPageTitle(`(${_page.ordered ? 'Ordered List' : 'Unordered List'})`))
+    header.appendChild(_buildPageTitle())
     _container.appendChild(header)
 
     const listEl = document.createElement('div')
@@ -71,24 +72,26 @@ function buildItemEl(item, position) {
     const el = document.createElement('div')
     el.className = 'list-item' + (item.done ? ' list-item--done' : '')
     el.dataset.id = item.id
-    el.draggable = true
 
     // Main row: number/bullet + title + delete
     const mainRow = document.createElement('div')
     mainRow.className = 'list-item-main'
 
+    const handle = document.createElement('span')
+    handle.className = 'list-item-handle'
+    handle.textContent = '⠿'
+    handle.title = 'Drag to reorder'
+    handle.addEventListener('mousedown', () => { el.draggable = true })
+    mainRow.appendChild(handle)
+
     if (_page.ordered) {
         const num = document.createElement('span')
         num.className = 'list-item-num'
-        num.textContent = item.done ? '✓' : position
-        num.title = item.done ? 'Mark incomplete' : 'Mark complete'
-        num.addEventListener('click', (e) => { e.stopPropagation(); _toggleDone(item.id, el) })
+        num.textContent = position
         mainRow.appendChild(num)
     } else {
         const bullet = document.createElement('span')
         bullet.className = 'list-item-bullet'
-        bullet.title = item.done ? 'Mark incomplete' : 'Mark complete'
-        bullet.addEventListener('click', (e) => { e.stopPropagation(); _toggleDone(item.id, el) })
         mainRow.appendChild(bullet)
     }
 
@@ -103,6 +106,13 @@ function buildItemEl(item, position) {
     })
     titleEl.addEventListener('blur', () => _saveTitle(item.id, titleEl.textContent.trim()))
     mainRow.appendChild(titleEl)
+
+    const doneBtn = document.createElement('button')
+    doneBtn.className = 'list-item-done-btn' + (item.done ? ' done' : '')
+    doneBtn.innerHTML = '&#10003;'
+    doneBtn.title = item.done ? 'Mark incomplete' : 'Mark complete'
+    doneBtn.addEventListener('click', (e) => { e.stopPropagation(); _toggleDone(item.id, el) })
+    mainRow.appendChild(doneBtn)
 
     const delBtn = document.createElement('button')
     delBtn.className = 'list-item-delete'
@@ -138,6 +148,7 @@ function buildSubtasksEl(item) {
 function buildChipEl(itemId, text) {
     const chip = document.createElement('span')
     chip.className = 'subtask-chip'
+    chip.draggable = true
 
     const label = document.createElement('span')
     label.textContent = text
@@ -152,7 +163,50 @@ function buildChipEl(itemId, text) {
     })
     chip.appendChild(removeBtn)
 
+    chip.addEventListener('dragstart', (e) => {
+        e.stopPropagation()
+        _dragChipSrc = chip
+        chip.classList.add('subtask-chip--dragging')
+        e.dataTransfer.effectAllowed = 'move'
+    })
+    chip.addEventListener('dragend', () => {
+        chip.classList.remove('subtask-chip--dragging')
+        chip.parentElement?.querySelectorAll('.subtask-chip--drag-over')
+            .forEach(x => x.classList.remove('subtask-chip--drag-over'))
+        const src = _dragChipSrc
+        _dragChipSrc = null
+        if (src) _persistChipOrder(itemId, src.parentElement)
+    })
+    chip.addEventListener('dragover', (e) => {
+        if (!_dragChipSrc || _dragChipSrc === chip) return
+        e.preventDefault()
+        e.stopPropagation()
+        chip.parentElement?.querySelectorAll('.subtask-chip--drag-over')
+            .forEach(x => x.classList.remove('subtask-chip--drag-over'))
+        chip.classList.add('subtask-chip--drag-over')
+    })
+    chip.addEventListener('dragleave', () => chip.classList.remove('subtask-chip--drag-over'))
+    chip.addEventListener('drop', (e) => {
+        if (!_dragChipSrc || _dragChipSrc === chip) return
+        e.preventDefault()
+        e.stopPropagation()
+        chip.classList.remove('subtask-chip--drag-over')
+        if (_dragChipSrc.parentElement !== chip.parentElement) return
+        const chips = [...chip.parentElement.querySelectorAll('.subtask-chip')]
+        if (chips.indexOf(_dragChipSrc) < chips.indexOf(chip)) chip.after(_dragChipSrc)
+        else chip.before(_dragChipSrc)
+    })
+
     return chip
+}
+
+async function _persistChipOrder(itemId, row) {
+    const item = _page.items.find(i => i.id === itemId)
+    if (!item || !row) return
+    item.subtasks = [...row.querySelectorAll('.subtask-chip')]
+        .map(c => c.querySelector('span')?.textContent ?? '')
+        .filter(Boolean)
+    await _save()
 }
 
 // ── Subtask inline input ──────────────────────────────────────────────────────
@@ -189,14 +243,10 @@ async function _toggleDone(itemId, el) {
     if (!item) return
     item.done = !item.done
     el.classList.toggle('list-item--done', item.done)
-    // Update the num/bullet indicator
-    const indicator = el.querySelector('.list-item-num, .list-item-bullet')
-    if (indicator) {
-        if (indicator.classList.contains('list-item-num')) {
-            const position = [...el.parentElement.children].indexOf(el) + 1
-            indicator.textContent = item.done ? '✓' : position
-        }
-        indicator.title = item.done ? 'Mark incomplete' : 'Mark complete'
+    const doneBtn = el.querySelector('.list-item-done-btn')
+    if (doneBtn) {
+        doneBtn.classList.toggle('done', item.done)
+        doneBtn.title = item.done ? 'Mark incomplete' : 'Mark complete'
     }
     await _save()
 }
@@ -249,7 +299,7 @@ async function _removeSubtask(itemId, text) {
 
 // ── Page title ────────────────────────────────────────────────────────────────
 
-function _buildPageTitle(subtitle) {
+function _buildPageTitle() {
     const frag = document.createDocumentFragment()
     const h1 = document.createElement('h1')
     h1.className = 'page-title page-title--editable'
@@ -264,18 +314,54 @@ function _buildPageTitle(subtitle) {
         if (updated) refreshSidebarItem(updated)
     })
     frag.appendChild(h1)
-    const sub = document.createElement('p')
-    sub.className = 'page-subtitle'
-    sub.textContent = subtitle
+
+    const sub = document.createElement('div')
+    sub.className = 'list-type-row'
+
+    const toggle = document.createElement('button')
+    toggle.className = 'list-type-toggle'
+    toggle.dataset.role = 'list-type-toggle'
+    _updateToggleLabel(toggle)
+    toggle.addEventListener('click', () => _toggleOrdered(toggle))
+    sub.appendChild(toggle)
     frag.appendChild(sub)
+
     return frag
+}
+
+function _updateToggleLabel(btn) {
+    btn.textContent = _page.ordered ? '# Ordered' : '• Unordered'
+}
+
+async function _toggleOrdered(toggleBtn) {
+    _page.ordered = !_page.ordered
+    _updateToggleLabel(toggleBtn)
+    // Swap number circles ↔ bullets in the DOM without a full redraw
+    _container.querySelectorAll('.list-item').forEach((itemEl, i) => {
+        const mainRow = itemEl.querySelector('.list-item-main')
+        const existing = itemEl.querySelector('.list-item-num, .list-item-bullet')
+        const item = _page.items.find(it => it.id === itemEl.dataset.id)
+        if (!existing || !item) return
+
+        if (_page.ordered) {
+            const num = document.createElement('span')
+            num.className = 'list-item-num'
+            num.textContent = i + 1
+            existing.replaceWith(num)
+        } else {
+            const bullet = document.createElement('span')
+            bullet.className = 'list-item-bullet'
+            existing.replaceWith(bullet)
+        }
+    })
+    await _save()
 }
 
 // ── Save to API ───────────────────────────────────────────────────────────────
 
 async function _save() {
     try {
-        const updated = await api.pages.update(_page.id, { items: _page.items })
+        const updated = await api.pages.update(_page.id, { items: _page.items, ordered: _page.ordered })
         Object.assign(_page, updated)
         refreshSidebarItem({ ..._page })
     } catch (err) {
@@ -307,9 +393,13 @@ function _setupDragDrop(listEl) {
 
     listEl.addEventListener('dragend', e => {
         const item = e.target.closest('.list-item')
-        item?.classList.remove('dragging')
+        if (item) {
+            item.draggable = false
+            item.classList.remove('dragging')
+        }
         listEl.querySelectorAll('.list-item.drag-over').forEach(el => el.classList.remove('drag-over'))
         dragId = null
+        // _dragChipSrc is cleared by the chip's own dragend handler
     })
 
     listEl.addEventListener('dragover', e => {
@@ -323,18 +413,46 @@ function _setupDragDrop(listEl) {
     listEl.addEventListener('drop', e => {
         e.preventDefault()
         const target = e.target.closest('.list-item')
-        if (!target || target.dataset.id === dragId) return
+        if (!target) return
+        listEl.querySelectorAll('.list-item.drag-over').forEach(el => el.classList.remove('drag-over'))
 
+        // ── Chip cross-item drop ──────────────────────────────────────────────
+        if (_dragChipSrc) {
+            const srcItem = _dragChipSrc.closest('.list-item')
+            if (!srcItem || srcItem === target) return
+            const srcId = srcItem.dataset.id
+            const tgtId = target.dataset.id
+
+            // Move chip DOM into target's subtask row (before + subtask button)
+            const tgtRow = target.querySelector('.list-subtasks')
+            const addBtn = tgtRow?.querySelector('.subtask-add-btn')
+            if (tgtRow) tgtRow.insertBefore(_dragChipSrc, addBtn ?? null)
+
+            // Sync subtask arrays from DOM for both items
+            const srcData = _page.items.find(i => i.id === srcId)
+            const tgtData = _page.items.find(i => i.id === tgtId)
+            if (srcData) {
+                srcData.subtasks = [...srcItem.querySelectorAll('.subtask-chip')]
+                    .map(c => c.querySelector('span')?.textContent ?? '').filter(Boolean)
+            }
+            if (tgtData) {
+                tgtData.subtasks = [...tgtRow.querySelectorAll('.subtask-chip')]
+                    .map(c => c.querySelector('span')?.textContent ?? '').filter(Boolean)
+            }
+            _save()
+            return
+        }
+
+        // ── Item reorder drop ─────────────────────────────────────────────────
+        if (target.dataset.id === dragId) return
         const els = [...listEl.querySelectorAll('.list-item')]
         const fromIdx = els.findIndex(el => el.dataset.id === dragId)
         const toIdx   = els.findIndex(el => el === target)
         if (fromIdx === -1 || toIdx === -1) return
 
-        // Move DOM element
         if (fromIdx < toIdx) target.after(els[fromIdx])
         else target.before(els[fromIdx])
 
-        // Update data order and save
         _page.items = reorderItems(_page.items, fromIdx, toIdx)
         _renumber()
         _save()

@@ -71,6 +71,35 @@
     border-color: var(--clr-border-hi);
 }
 
+.progress-task--dragging {
+    opacity: 0.35;
+}
+
+.progress-task--drag-over {
+    border-color: var(--clr-accent);
+    background: var(--clr-accent-bg);
+}
+
+.progress-task-handle {
+    font-size: 15px;
+    color: var(--clr-text-muted);
+    cursor: grab;
+    padding: 4px 2px;
+    flex-shrink: 0;
+    opacity: 0;
+    transition: opacity var(--transition);
+    line-height: 1;
+    user-select: none;
+}
+
+.progress-task:hover .progress-task-handle {
+    opacity: 1;
+}
+
+.progress-task-handle:active {
+    cursor: grabbing;
+}
+
 .progress-task-title {
     flex: 1;
     font-size: 14px;
@@ -212,6 +241,27 @@
     max-width: none;
 }
 
+/* ── Bar drag handle ──────────────────────────────────────────────────────────── */
+.pb-bar-handle {
+    font-size: 15px;
+    color: var(--clr-text-muted);
+    cursor: grab;
+    padding: 4px 2px;
+    flex-shrink: 0;
+    opacity: 0;
+    transition: opacity var(--transition);
+    line-height: 1;
+    user-select: none;
+}
+
+.pb-bar-row:hover .pb-bar-handle {
+    opacity: 1;
+}
+
+.pb-bar-handle:active {
+    cursor: grabbing;
+}
+
 /* ── Bar rows ─────────────────────────────────────────────────────────────────── */
 .pb-bars-list {
     display: flex;
@@ -232,6 +282,15 @@
 
 .pb-bar-row:hover {
     border-color: var(--clr-border-hi);
+}
+
+.pb-bar-row--dragging {
+    opacity: 0.35;
+}
+
+.pb-bar-row--drag-over {
+    border-color: var(--clr-accent);
+    background: var(--clr-accent-bg);
 }
 
 .pb-bar-num {
@@ -304,6 +363,15 @@
 .pb-chip:hover {
     filter: brightness(1.12);
     transform: translateY(-1px);
+}
+
+.pb-chip--dragging {
+    opacity: 0.35;
+}
+
+.pb-chip--drag-over {
+    outline: 2px solid var(--clr-accent);
+    outline-offset: 2px;
 }
 
 .pb-chip-label {
@@ -418,9 +486,10 @@
         margin-top: 8px;
     }
 
-    /* Always show action buttons (no hover on touch) */
+    /* Always show action buttons and drag handle (no hover on touch) */
     .pb-copy-btn,
-    .pb-del-btn {
+    .pb-del-btn,
+    .pb-bar-handle {
         opacity: 0.6;
     }
 
@@ -436,7 +505,8 @@
         justify-content: flex-start;
     }
 
-    .progress-task-delete {
+    .progress-task-delete,
+    .progress-task-handle {
         opacity: 0.6;
     }
 }
