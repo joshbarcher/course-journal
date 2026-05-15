@@ -417,7 +417,8 @@
         margin-top: 8px;
     }
 
-    /* Always show delete button (no hover on touch) */
+    /* Always show action buttons (no hover on touch) */
+    .pb-copy-btn,
     .pb-del-btn {
         opacity: 0.6;
     }
@@ -440,25 +441,9 @@
 }
 
 /* ── Copy / Delete bar buttons ────────────────────────────────────────────────── */
-.pb-copy-btn {
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    padding: 4px 10px;
-    border: 1px solid var(--clr-border);
-    border-radius: 3px;
-    color: var(--clr-text-muted);
-    flex-shrink: 0;
-    transition: border-color var(--transition), color var(--transition);
-}
-
-.pb-copy-btn:hover {
-    border-color: var(--clr-accent);
-    color: var(--clr-accent);
-}
-
+.pb-copy-btn,
 .pb-del-btn {
-    font-size: 17px;
+    font-size: 16px;
     line-height: 1;
     padding: 4px 7px;
     color: var(--clr-text-muted);
@@ -468,8 +453,13 @@
     flex-shrink: 0;
 }
 
+.pb-bar-row:hover .pb-copy-btn,
 .pb-bar-row:hover .pb-del-btn {
     opacity: 1;
+}
+
+.pb-copy-btn:hover {
+    color: var(--clr-accent);
 }
 
 .pb-del-btn:hover {

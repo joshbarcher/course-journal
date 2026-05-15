@@ -132,7 +132,7 @@ function _buildBarRow(bar) {
     // Copy button
     const copyBtn = document.createElement('button')
     copyBtn.className = 'pb-copy-btn'
-    copyBtn.textContent = 'Copy'
+    copyBtn.textContent = '⧉'
     copyBtn.title = 'Duplicate bar (states reset)'
     copyBtn.addEventListener('click', () => _copyBar(bar.id))
     row.appendChild(copyBtn)
