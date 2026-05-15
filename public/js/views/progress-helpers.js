@@ -1,0 +1,69 @@
+export const STATE_COLORS = {
+    done:    '#4ecdc4',
+    working: '#c9a84c',
+    started: '#7ab8f5',
+}
+
+const DIM = 'rgba(255,255,255,0.10)'
+
+export function segmentColor(state) {
+    return STATE_COLORS[state] ?? DIM
+}
+
+export function barProgressPercent(bar) {
+    const steps = bar.steps ?? []
+    if (!steps.length) return 0
+    const done = steps.filter(s => s.state === 'done').length
+    return Math.round((done / steps.length) * 100)
+}
+
+export function percentToColor(pct) {
+    if (pct >= 100) return STATE_COLORS.done
+    if (pct >= 50)  return STATE_COLORS.working
+    if (pct > 0)    return STATE_COLORS.started
+    return DIM
+}
+
+const STATE_DISPLAY = { started: 'Started', working: 'Working', done: 'Done' }
+
+export function stateLabel(state) {
+    return STATE_DISPLAY[state] ?? ''
+}
+
+export function percentToStateLabel(pct) {
+    if (pct >= 100) return 'Done'
+    if (pct >= 50)  return 'Working'
+    if (pct > 0)    return 'Started'
+    return ''
+}
+
+// Returns heatmap row data for all progress/progress-bars pages.
+// Pure — no DOM, fully testable in Node.
+export function heatmapRows(pages) {
+    return pages
+        .filter(p => p.type === 'progress' || p.type === 'progress-bars')
+        .map(p => ({ id: p.id, title: p.title, cells: globalSegments(p) }))
+}
+
+export function globalSegments(page) {
+    if (page.type === 'progress') {
+        return (page.tasks ?? []).map((t, i) => ({
+            num:        i + 1,
+            color:      segmentColor(t.state),
+            label:      t.title,
+            stateLabel: stateLabel(t.state),
+        }))
+    }
+    if (page.type === 'progress-bars') {
+        return (page.bars ?? []).map((b, i) => {
+            const pct = barProgressPercent(b)
+            return {
+                num:        i + 1,
+                color:      percentToColor(pct),
+                label:      b.title,
+                stateLabel: percentToStateLabel(pct),
+            }
+        })
+    }
+    return []
+}

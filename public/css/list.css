@@ -1,0 +1,201 @@
+/* ── Item list container ─────────────────────────────────────────────────────── */
+.list-items {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-bottom: 18px;
+    max-width: 760px;
+}
+
+/* ── Item card ───────────────────────────────────────────────────────────────── */
+.list-item {
+    border: 1px solid var(--clr-border);
+    border-radius: var(--radius);
+    padding: 14px 16px 12px;
+    transition: border-color var(--transition);
+    cursor: grab;
+}
+
+.list-item:hover {
+    border-color: var(--clr-border-hi);
+}
+
+.list-item:active {
+    cursor: grabbing;
+}
+
+.list-item.dragging {
+    opacity: 0.35;
+    cursor: grabbing;
+}
+
+.list-item.drag-over {
+    border-color: var(--clr-accent);
+    background: var(--clr-accent-bg);
+}
+
+/* ── Main row: number/bullet + title + delete ────────────────────────────────── */
+.list-item-main {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.list-item-num {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border: 1.5px solid var(--clr-border-hi);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: 700;
+    flex-shrink: 0;
+    letter-spacing: 0;
+}
+
+.list-item-bullet {
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 26px;
+    color: var(--clr-border-hi);
+    line-height: 1;
+}
+
+.list-item-bullet::before {
+    content: '•';
+}
+
+.list-item-title {
+    flex: 1;
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.4;
+    outline: none;
+    border-radius: 2px;
+    padding: 3px 5px;
+    word-break: break-word;
+    min-width: 0;
+    cursor: text;
+    /* prevent dragging the item when clicking the title */
+    -webkit-user-drag: none;
+}
+
+.list-item-title:focus {
+    background: rgba(255, 255, 255, 0.05);
+    outline: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.list-item-title:empty::before {
+    content: 'Item title…';
+    color: var(--clr-text-muted);
+    pointer-events: none;
+    font-weight: 400;
+}
+
+.list-item-delete {
+    opacity: 0;
+    padding: 5px 9px;
+    border-radius: var(--radius);
+    font-size: 18px;
+    line-height: 1;
+    color: var(--clr-text-muted);
+    transition: opacity var(--transition), color var(--transition);
+    flex-shrink: 0;
+}
+
+.list-item:hover .list-item-delete {
+    opacity: 1;
+}
+
+.list-item-delete:hover {
+    color: var(--clr-text);
+}
+
+/* ── Subtasks row ────────────────────────────────────────────────────────────── */
+.list-subtasks {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    margin-top: 10px;
+}
+
+.subtask-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 9px;
+    border: 1px solid var(--clr-border);
+    border-radius: 3px;
+    font-size: 12.5px;
+    transition: border-color var(--transition);
+}
+
+.subtask-chip:hover {
+    border-color: var(--clr-border-hi);
+}
+
+.subtask-chip-remove {
+    font-size: 13px;
+    line-height: 1;
+    color: var(--clr-text-muted);
+    padding: 0;
+    transition: color var(--transition);
+}
+
+.subtask-chip-remove:hover {
+    color: var(--clr-text);
+}
+
+.subtask-add-btn {
+    font-size: 12px;
+    color: var(--clr-text-muted);
+    padding: 4px 6px;
+    transition: color var(--transition);
+}
+
+.subtask-add-btn:hover {
+    color: var(--clr-text);
+}
+
+.subtask-input {
+    background: var(--clr-bg-raised);
+    border: 1px solid var(--clr-border-hi);
+    border-radius: 3px;
+    color: var(--clr-text);
+    font-family: var(--font-ui);
+    font-size: 12.5px;
+    padding: 4px 9px;
+    outline: none;
+    width: 130px;
+}
+
+.subtask-input:focus {
+    border-color: var(--clr-accent);
+}
+
+/* ── Add item button ─────────────────────────────────────────────────────────── */
+.list-add-btn {
+    max-width: 760px;
+    width: 100%;
+    padding: 11px 16px;
+    border: 1px dashed var(--clr-border);
+    border-radius: var(--radius);
+    color: var(--clr-text-muted);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    transition: border-color var(--transition), color var(--transition), background var(--transition);
+}
+
+.list-add-btn:hover {
+    border-color: var(--clr-border-hi);
+    color: var(--clr-text);
+    background: var(--clr-bg-hover);
+}

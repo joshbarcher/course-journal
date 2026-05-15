@@ -1,0 +1,63 @@
+/* ── Heatmap grid ─────────────────────────────────────────────────────────────── */
+.heatmap-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-width: 760px;
+}
+
+.heatmap-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.heatmap-label {
+    width: 160px;
+    min-width: 160px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--clr-text-muted);
+    text-decoration: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: color var(--transition);
+    flex-shrink: 0;
+}
+
+.heatmap-label:hover {
+    color: var(--clr-text);
+}
+
+/* ── Cell strip ───────────────────────────────────────────────────────────────── */
+.heatmap-cells {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.heatmap-cell {
+    display: block;
+    width: 38px;
+    height: 38px;
+    border-radius: 4px;
+    text-decoration: none;
+    transition: transform var(--transition), filter var(--transition);
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.heatmap-cell:hover {
+    transform: scale(1.15);
+    filter: brightness(1.2);
+    z-index: 1;
+    position: relative;
+}
+
+.heatmap-cell--dim {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px dashed var(--clr-border);
+    cursor: default;
+}

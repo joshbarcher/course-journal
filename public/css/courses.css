@@ -1,0 +1,251 @@
+/* ── Course grid ──────────────────────────────────────────────────────────────── */
+.courses-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 16px;
+    max-width: 900px;
+    margin-bottom: 20px;
+}
+
+.courses-empty {
+    color: var(--clr-text-muted);
+    font-size: 13px;
+    margin-bottom: 20px;
+}
+
+/* ── Course card ──────────────────────────────────────────────────────────────── */
+.course-card {
+    background: var(--clr-bg-raised);
+    border: 1px solid var(--clr-border);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    cursor: pointer;
+    transition: border-color var(--transition), background var(--transition);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.course-card:hover {
+    border-color: var(--clr-border-hi);
+    background: var(--clr-bg-hover);
+}
+
+.course-card-name {
+    font-family: var(--font-title);
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--clr-text);
+    letter-spacing: 0.03em;
+    line-height: 1.3;
+}
+
+/* ── Mini heatmap ─────────────────────────────────────────────────────────────── */
+.course-card-heat {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-height: 16px;
+}
+
+.mini-heat-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px;
+}
+
+.mini-heat-cell {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+    flex-shrink: 0;
+}
+
+/* ── Card actions ─────────────────────────────────────────────────────────────── */
+.course-card-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: auto;
+}
+
+.course-card-btn {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--clr-text-muted);
+    padding: 4px 10px;
+    border: 1px solid var(--clr-border);
+    border-radius: var(--radius);
+    transition: color var(--transition), border-color var(--transition), background var(--transition);
+}
+
+.course-card-btn:hover:not(:disabled) {
+    color: var(--clr-text);
+    border-color: var(--clr-border-hi);
+    background: var(--clr-bg-hover);
+}
+
+.course-card-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.course-card-btn--danger {
+    color: rgba(220, 80, 80, 0.6);
+    border-color: rgba(220, 80, 80, 0.25);
+}
+
+.course-card-btn--danger:hover:not(:disabled) {
+    color: #dc5050;
+    border-color: rgba(220, 80, 80, 0.6);
+    background: rgba(220, 80, 80, 0.08);
+}
+
+/* ── Add course button ────────────────────────────────────────────────────────── */
+.courses-add-btn {
+    display: block;
+    padding: 10px 22px;
+    border: 1px dashed var(--clr-border);
+    border-radius: var(--radius);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: var(--clr-text-muted);
+    transition: color var(--transition), border-color var(--transition), background var(--transition);
+}
+
+.courses-add-btn:hover {
+    color: var(--clr-text);
+    border-color: var(--clr-border-hi);
+    background: var(--clr-bg-hover);
+}
+
+/* ── Confirm dialog ───────────────────────────────────────────────────────────── */
+.dialog-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.65);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    backdrop-filter: blur(2px);
+}
+
+.dialog-box {
+    background: var(--clr-bg-raised);
+    border: 1px solid var(--clr-border-hi);
+    border-radius: var(--radius);
+    padding: 24px 28px;
+    min-width: 320px;
+    max-width: 440px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+.dialog-title {
+    font-family: var(--font-title);
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--clr-text);
+    letter-spacing: 0.02em;
+}
+
+.dialog-body {
+    font-size: 13px;
+    color: var(--clr-text-muted);
+    line-height: 1.5;
+}
+
+.dialog-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 6px;
+}
+
+.dialog-btn {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    padding: 7px 16px;
+    border-radius: var(--radius);
+    border: 1px solid var(--clr-border);
+    transition: background var(--transition), border-color var(--transition), color var(--transition);
+}
+
+.dialog-btn--cancel {
+    color: var(--clr-text-muted);
+}
+
+.dialog-btn--cancel:hover {
+    color: var(--clr-text);
+    border-color: var(--clr-border-hi);
+    background: var(--clr-bg-hover);
+}
+
+.dialog-btn--confirm {
+    color: #dc5050;
+    border-color: rgba(220, 80, 80, 0.4);
+    background: rgba(220, 80, 80, 0.08);
+}
+
+.dialog-btn--confirm:hover {
+    background: rgba(220, 80, 80, 0.18);
+    border-color: rgba(220, 80, 80, 0.7);
+}
+
+.dialog-btn--confirm:focus-visible {
+    outline: 2px solid rgba(220, 80, 80, 0.5);
+    outline-offset: 2px;
+}
+
+/* ── Sidebar course header ────────────────────────────────────────────────────── */
+.sidebar-course-header {
+    padding: 4px 2px 12px;
+    border-bottom: 1px solid var(--clr-border);
+    margin-bottom: 2px;
+}
+
+.sidebar-back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--clr-text-muted);
+    text-decoration: none;
+    padding: 2px 0;
+    transition: color var(--transition);
+}
+
+.sidebar-back-link:hover {
+    color: var(--clr-accent);
+    text-decoration: none;
+}
+
+.sidebar-course-name {
+    margin-top: 10px;
+    font-family: var(--font-title);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--clr-text);
+    letter-spacing: 0.03em;
+    line-height: 1.35;
+    word-break: break-word;
+}
+
+.sidebar-course-name--clickable {
+    cursor: pointer;
+    transition: color var(--transition);
+}
+
+.sidebar-course-name--clickable:hover {
+    color: var(--clr-accent);
+}

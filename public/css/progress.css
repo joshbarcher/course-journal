@@ -1,0 +1,421 @@
+/* ── Global bar ───────────────────────────────────────────────────────────────── */
+.progress-global-bar {
+    display: flex;
+    gap: 4px;
+    max-width: 760px;
+    margin-bottom: 28px;
+    min-height: 44px;
+    align-items: stretch;
+}
+
+.progress-global-seg {
+    flex: 1;
+    border-radius: 3px;
+    min-width: 20px;
+    transition: background var(--transition), transform var(--transition);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: rgba(0, 0, 0, 0.65);
+    cursor: default;
+    padding: 4px 2px;
+}
+
+.progress-global-seg:hover {
+    transform: scaleY(1.08);
+}
+
+.progress-seg-num {
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.progress-seg-state {
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    opacity: 0.7;
+    text-transform: uppercase;
+    margin-top: 3px;
+}
+
+.progress-global-empty {
+    font-size: 12px;
+    color: var(--clr-text-muted);
+    align-self: center;
+}
+
+/* ── Task / Step rows ─────────────────────────────────────────────────────────── */
+.progress-tasks,
+.progress-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-width: 760px;
+    margin-bottom: 4px;
+}
+
+.progress-task {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    border: 1px solid var(--clr-border);
+    border-radius: var(--radius);
+    transition: border-color var(--transition);
+}
+
+.progress-task:hover {
+    border-color: var(--clr-border-hi);
+}
+
+.progress-task-title {
+    flex: 1;
+    font-size: 14px;
+    font-weight: 500;
+    outline: none;
+    border-radius: 2px;
+    padding: 2px 5px;
+    word-break: break-word;
+    min-width: 0;
+    cursor: text;
+    -webkit-user-drag: none;
+}
+
+.progress-task-title:focus {
+    background: rgba(255, 255, 255, 0.05);
+    outline: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.progress-task-title:empty::before {
+    content: 'Step title…';
+    color: var(--clr-text-muted);
+    pointer-events: none;
+    font-weight: 400;
+}
+
+/* ── State buttons ────────────────────────────────────────────────────────────── */
+.progress-state-btns {
+    display: flex;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+.progress-state-btn {
+    padding: 4px 9px;
+    border: 1px solid var(--clr-border);
+    border-radius: 3px;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    color: var(--clr-text-muted);
+    transition: border-color var(--transition), color var(--transition), background var(--transition);
+}
+
+.progress-state-btn:hover {
+    border-color: var(--clr-border-hi);
+    color: var(--clr-text);
+}
+
+.progress-state-btn.active {
+    border-color: var(--state-color, var(--clr-accent));
+    color: var(--state-color, var(--clr-accent));
+    background: color-mix(in srgb, var(--state-color, var(--clr-accent)) 12%, transparent);
+}
+
+/* ── Delete button ────────────────────────────────────────────────────────────── */
+.progress-task-delete {
+    opacity: 0;
+    padding: 4px 8px;
+    border-radius: var(--radius);
+    font-size: 17px;
+    line-height: 1;
+    color: var(--clr-text-muted);
+    transition: opacity var(--transition), color var(--transition);
+    flex-shrink: 0;
+}
+
+.progress-task:hover .progress-task-delete {
+    opacity: 1;
+}
+
+.progress-task-delete:hover {
+    color: var(--clr-text);
+}
+
+/* ── Add task / step buttons ──────────────────────────────────────────────────── */
+.progress-add-btn {
+    max-width: 760px;
+    width: 100%;
+    padding: 10px 16px;
+    border: 1px dashed var(--clr-border);
+    border-radius: var(--radius);
+    color: var(--clr-text-muted);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    margin-bottom: 28px;
+    transition: border-color var(--transition), color var(--transition), background var(--transition);
+}
+
+.progress-add-btn:hover {
+    border-color: var(--clr-border-hi);
+    color: var(--clr-text);
+    background: var(--clr-bg-hover);
+}
+
+/* ── Notes ────────────────────────────────────────────────────────────────────── */
+.progress-notes-wrap {
+    max-width: 760px;
+    margin-top: 8px;
+}
+
+.progress-notes-label {
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--clr-text-muted);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+}
+
+.progress-notes {
+    width: 100%;
+    min-height: 90px;
+    background: var(--clr-bg-raised);
+    border: 1px solid var(--clr-border);
+    border-radius: var(--radius);
+    color: var(--clr-text);
+    font-family: var(--font-ui);
+    font-size: 13.5px;
+    padding: 10px 14px;
+    outline: none;
+    resize: vertical;
+    transition: border-color var(--transition);
+    box-sizing: border-box;
+}
+
+.progress-notes:focus {
+    border-color: var(--clr-border-hi);
+}
+
+/* ── Multi-bar layout container ───────────────────────────────────────────────── */
+.pb-body {
+    max-width: 760px;
+}
+
+.pb-body .progress-add-btn,
+.pb-body .progress-notes-wrap {
+    max-width: none;
+}
+
+/* ── Bar rows ─────────────────────────────────────────────────────────────────── */
+.pb-bars-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.pb-bar-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border: 1px solid var(--clr-border);
+    border-radius: var(--radius);
+    transition: border-color var(--transition);
+}
+
+.pb-bar-row:hover {
+    border-color: var(--clr-border-hi);
+}
+
+.pb-bar-num {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 1.5px solid var(--clr-border-hi);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.pb-bar-title {
+    font-size: 13px;
+    font-weight: 600;
+    outline: none;
+    border-radius: 2px;
+    padding: 2px 5px;
+    width: 130px;
+    min-width: 80px;
+    flex-shrink: 0;
+    cursor: text;
+    -webkit-user-drag: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.pb-bar-title:focus {
+    background: rgba(255, 255, 255, 0.05);
+    outline: 1px solid rgba(255, 255, 255, 0.3);
+    white-space: normal;
+    overflow: visible;
+}
+
+.pb-bar-title:empty::before {
+    content: 'Bar title…';
+    color: var(--clr-text-muted);
+    pointer-events: none;
+    font-weight: 400;
+}
+
+/* ── Step chips ───────────────────────────────────────────────────────────────── */
+.pb-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    flex: 1;
+    align-items: center;
+}
+
+.pb-chip {
+    position: relative;
+    min-width: 64px;
+    min-height: 48px;
+    border-radius: 4px;
+    padding: 6px 8px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: filter var(--transition), transform var(--transition);
+    user-select: none;
+    text-align: center;
+}
+
+.pb-chip:hover {
+    filter: brightness(1.12);
+    transform: translateY(-1px);
+}
+
+.pb-chip-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-align: center;
+    line-height: 1.3;
+    word-break: break-word;
+    outline: none;
+    cursor: pointer;
+}
+
+.pb-chip-state {
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    opacity: 0.7;
+    text-transform: uppercase;
+    margin-top: 3px;
+    line-height: 1;
+    min-height: 10px;
+}
+
+.pb-chip-label[contenteditable="true"] {
+    cursor: text;
+    outline: 1px dashed rgba(255, 255, 255, 0.4);
+    border-radius: 2px;
+    padding: 1px 3px;
+}
+
+.pb-chip-del {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    background: var(--clr-bg-raised);
+    border: 1px solid var(--clr-border);
+    font-size: 10px;
+    line-height: 1;
+    color: var(--clr-text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity var(--transition), color var(--transition);
+    padding: 0;
+}
+
+.pb-chip:hover .pb-chip-del {
+    opacity: 1;
+}
+
+.pb-chip-del:hover {
+    color: var(--clr-text);
+}
+
+.pb-chip-add {
+    width: 34px;
+    height: 34px;
+    border-radius: 4px;
+    border: 1px dashed var(--clr-border);
+    color: var(--clr-text-muted);
+    font-size: 18px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: border-color var(--transition), color var(--transition);
+    flex-shrink: 0;
+}
+
+.pb-chip-add:hover {
+    border-color: var(--clr-border-hi);
+    color: var(--clr-text);
+}
+
+/* ── Copy / Delete bar buttons ────────────────────────────────────────────────── */
+.pb-copy-btn {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    padding: 4px 10px;
+    border: 1px solid var(--clr-border);
+    border-radius: 3px;
+    color: var(--clr-text-muted);
+    flex-shrink: 0;
+    transition: border-color var(--transition), color var(--transition);
+}
+
+.pb-copy-btn:hover {
+    border-color: var(--clr-accent);
+    color: var(--clr-accent);
+}
+
+.pb-del-btn {
+    font-size: 17px;
+    line-height: 1;
+    padding: 4px 7px;
+    color: var(--clr-text-muted);
+    border-radius: var(--radius);
+    transition: color var(--transition), opacity var(--transition);
+    opacity: 0;
+    flex-shrink: 0;
+}
+
+.pb-bar-row:hover .pb-del-btn {
+    opacity: 1;
+}
+
+.pb-del-btn:hover {
+    color: var(--clr-text);
+}

@@ -1,0 +1,64 @@
+/* ── Design tokens ─────────────────────────────────────────────────────────── */
+:root {
+    --clr-bg:           #0c0c0c;
+    --clr-bg-raised:    #141414;
+    --clr-bg-hover:     #1c1c1c;
+    --clr-border:       rgba(255, 255, 255, 0.28);
+    --clr-border-hi:    rgba(255, 255, 255, 0.55);
+    --clr-border-act:   #c9a84c;
+    --clr-text:         #e8e6de;
+    --clr-text-muted:   rgba(232, 230, 222, 0.42);
+    --clr-accent:       #c9a84c;
+    --clr-accent-bg:    rgba(201, 168, 76, 0.1);
+    --clr-progress:     #4ecdc4;
+    --clr-progress-bg:  rgba(78, 205, 196, 0.15);
+    --font-title:       'Cinzel', Georgia, 'Times New Roman', serif;
+    --font-ui:          'Nunito', 'Segoe UI', system-ui, sans-serif;
+    --sidebar-w:        320px;
+    --radius:           4px;
+    --transition:       0.15s ease;
+}
+
+/* ── Reset ─────────────────────────────────────────────────────────────────── */
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html, body {
+    height: 100%;
+}
+
+body {
+    background: var(--clr-bg);
+    color: var(--clr-text);
+    font-family: var(--font-ui);
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+}
+
+a {
+    color: var(--clr-accent);
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+button {
+    font-family: inherit;
+    font-size: inherit;
+    cursor: pointer;
+    background: none;
+    border: none;
+    color: inherit;
+}
+
+/* ── Scrollbars ─────────────────────────────────────────────────────────────── */
+::-webkit-scrollbar              { width: 5px; height: 5px; }
+::-webkit-scrollbar-track        { background: transparent; }
+::-webkit-scrollbar-thumb        { background: rgba(255, 255, 255, 0.14); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover  { background: rgba(255, 255, 255, 0.28); }
