@@ -3,6 +3,7 @@ import { escapeHtml } from '../utils.js'
 import { refreshSidebarItem } from '../sidebar.js'
 import { segmentColor, barProgressPercent, percentToColor, globalSegments, stateLabel } from './progress-helpers.js'
 import { fireParticles } from '../particles.js'
+import { showContextMenu } from './context-menu.js'
 
 const STATE_CYCLE = [null, 'started', 'working', 'done']
 
@@ -81,7 +82,7 @@ function _redrawGlobalBar() {
     }
     for (const seg of segs) {
         const el = document.createElement('div')
-        el.className = 'progress-global-seg'
+        el.className = 'progress-global-seg' + (seg.optional ? ' progress-global-seg--optional' : '')
         el.style.background = seg.color
         el.title = seg.label || `Bar ${seg.num}`
         el.dataset.num = seg.num
@@ -94,9 +95,26 @@ function _redrawGlobalBar() {
 
 // ── Bar row (compact) ─────────────────────────────────────────────────────────
 
+function _barRowClass(bar) {
+    const pct = barProgressPercent(bar)
+    let cls = 'pb-bar-row'
+    if (bar.optional) cls += pct >= 100 ? ' pb-bar-row--optional-done' : ' pb-bar-row--optional'
+    return cls
+}
+
+function _refreshBarRowClass(barId) {
+    const bar = (_page.bars ?? []).find(b => b.id === barId)
+    if (!bar) return
+    const row = _container.querySelector(`.pb-bar-row[data-bar-id="${barId}"]`)
+    if (!row) return
+    const pct = barProgressPercent(bar)
+    row.classList.remove('pb-bar-row--optional', 'pb-bar-row--optional-done')
+    if (bar.optional) row.classList.add(pct >= 100 ? 'pb-bar-row--optional-done' : 'pb-bar-row--optional')
+}
+
 function _buildBarRow(bar) {
     const row = document.createElement('div')
-    row.className = 'pb-bar-row'
+    row.className = _barRowClass(bar)
     row.dataset.barId = bar.id
 
     // Drag handle
@@ -120,9 +138,17 @@ function _buildBarRow(bar) {
     titleEl.contentEditable = 'true'
     titleEl.textContent = bar.title ?? ''
     titleEl.setAttribute('aria-label', 'Bar title')
+    titleEl.addEventListener('mousedown', e => { if (e.button === 2) e.preventDefault() })
     titleEl.addEventListener('blur', e => _onBarTitleBlur(bar.id, e.target.textContent.trim()))
     titleEl.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); e.target.blur() } })
     row.appendChild(titleEl)
+
+    if (bar.optional) {
+        const tag = document.createElement('span')
+        tag.className = 'progress-optional-tag'
+        tag.textContent = 'OPTIONAL'
+        row.appendChild(tag)
+    }
 
     // Chips
     const chips = document.createElement('div')
@@ -139,21 +165,19 @@ function _buildBarRow(bar) {
     chips.appendChild(addChip)
     row.appendChild(chips)
 
-    // Copy button
-    const copyBtn = document.createElement('button')
-    copyBtn.className = 'pb-copy-btn'
-    copyBtn.textContent = '⧉'
-    copyBtn.title = 'Duplicate bar (states reset)'
-    copyBtn.addEventListener('click', () => _copyBar(bar.id))
-    row.appendChild(copyBtn)
-
-    // Delete button
-    const delBtn = document.createElement('button')
-    delBtn.className = 'pb-del-btn'
-    delBtn.innerHTML = '&times;'
-    delBtn.setAttribute('aria-label', 'Delete bar')
-    delBtn.addEventListener('click', () => _deleteBar(bar.id))
-    row.appendChild(delBtn)
+    // Right-click context menu (replaces inline copy/delete buttons)
+    row.addEventListener('contextmenu', e => {
+        if (e.target.closest('.pb-chip')) return  // chips have their own menu
+        showContextMenu(e, [
+            {
+                label: bar.optional ? 'Unmark Optional' : 'Mark Optional',
+                action: () => _toggleBarOptional(bar.id),
+            },
+            'separator',
+            { label: 'Duplicate', action: () => _copyBar(bar.id) },
+            { label: 'Delete', danger: true, action: () => _deleteBar(bar.id) },
+        ])
+    })
 
     _attachBarDrag(row)
 
@@ -166,7 +190,7 @@ function _buildChip(barId, step) {
     const chip = document.createElement('div')
     chip.className = 'pb-chip'
     chip.dataset.stepId = step.id
-    _applyChipState(chip, step.state)
+    _applyChipState(chip, step.state, step.optional)
 
     const label = document.createElement('span')
     label.className = 'pb-chip-label'
@@ -178,23 +202,26 @@ function _buildChip(barId, step) {
     stateLabelEl.textContent = stateLabel(step.state)
     chip.appendChild(stateLabelEl)
 
-    // Click on chip body → cycle state (unless editing label)
+    // Click on chip body → cycle state (unless clicking the label)
     chip.addEventListener('click', e => {
-        if (e.target === label && label.isContentEditable && document.activeElement === label) return
+        if (label.contains(e.target)) return
         _cycleStepState(barId, step.id, chip)
     })
 
-    // Double-click label → edit title
-    label.addEventListener('dblclick', e => {
-        e.stopPropagation()
+    // Click label → edit title
+    const enterLabelEdit = () => {
         label.contentEditable = 'true'
         label.focus()
-        // select all text
         const range = document.createRange()
         range.selectNodeContents(label)
         const sel = window.getSelection()
         sel.removeAllRanges()
         sel.addRange(range)
+    }
+    label.addEventListener('mousedown', e => { if (e.button === 2) e.preventDefault() })
+    label.addEventListener('click', e => {
+        e.stopPropagation()
+        if (label.contentEditable !== 'true') enterLabelEdit()
     })
     label.addEventListener('blur', e => {
         label.contentEditable = 'false'
@@ -205,12 +232,18 @@ function _buildChip(barId, step) {
         if (e.key === 'Escape') { e.target.blur() }
     })
 
-    const del = document.createElement('button')
-    del.className = 'pb-chip-del'
-    del.innerHTML = '&times;'
-    del.setAttribute('aria-label', 'Delete step')
-    del.addEventListener('click', e => { e.stopPropagation(); _deleteStep(barId, step.id) })
-    chip.appendChild(del)
+    // Right-click context menu (replaces inline delete button)
+    chip.addEventListener('contextmenu', e => {
+        e.stopPropagation()
+        showContextMenu(e, [
+            {
+                label: step.optional ? 'Unmark Optional' : 'Mark Optional',
+                action: () => _toggleStepOptional(barId, step.id),
+            },
+            'separator',
+            { label: 'Delete', danger: true, action: () => _deleteStep(barId, step.id) },
+        ])
+    })
 
     _attachChipDrag(chip, barId)
 
@@ -311,12 +344,16 @@ async function _persistChipOrder(barId) {
     await _save()
 }
 
-function _applyChipState(chip, state) {
+function _applyChipState(chip, state, optional = false) {
     chip.dataset.state = state ?? ''
     chip.style.background = state ? segmentColor(state) : 'rgba(255,255,255,0.07)'
     chip.style.color = state ? 'rgba(0,0,0,0.75)' : 'var(--clr-text-muted)'
     const sl = chip.querySelector('.pb-chip-state')
     if (sl) sl.textContent = stateLabel(state)
+    if (optional) {
+        chip.classList.toggle('pb-chip--optional',      state !== 'done')
+        chip.classList.toggle('pb-chip--optional-done', state === 'done')
+    }
 }
 
 function _refreshBarNums() {
@@ -337,11 +374,12 @@ async function _cycleStepState(barId, stepId, chipEl) {
     const prev = step.state
     const idx = STATE_CYCLE.indexOf(step.state)
     step.state = STATE_CYCLE[(idx + 1) % STATE_CYCLE.length]
-    _applyChipState(chipEl, step.state)
+    _applyChipState(chipEl, step.state, step.optional)
+    _refreshBarRowClass(barId)
     _redrawGlobalBar()
     if (step.state === 'done' && prev !== 'done') {
-        const steps = bar.steps ?? []
-        if (steps.length > 0 && steps.every(s => s.state === 'done')) {
+        const required = (bar.steps ?? []).filter(s => !s.optional)
+        if (required.length > 0 && required.every(s => s.state === 'done')) {
             fireParticles(chipEl, bar.title)
         }
     }
@@ -397,9 +435,11 @@ async function _copyBar(sourceBarId) {
     const newBar = {
         id: crypto.randomUUID(),
         title: source.title,
+        optional: source.optional,
         steps: (source.steps ?? []).map(s => ({
             id: crypto.randomUUID(),
             title: s.title,
+            optional: s.optional,
             state: null,
         })),
     }
@@ -422,7 +462,7 @@ async function _copyBar(sourceBarId) {
 async function _addStep(barId) {
     const bar = (_page.bars ?? []).find(b => b.id === barId)
     if (!bar) return
-    const step = { id: crypto.randomUUID(), title: 'Step', state: null }
+    const step = { id: crypto.randomUUID(), title: '', state: null }
     bar.steps = [...(bar.steps ?? []), step]
 
     const row = _container.querySelector(`.pb-bar-row[data-bar-id="${barId}"]`)
@@ -433,6 +473,10 @@ async function _addStep(barId) {
     chips.insertBefore(chip, addBtn)
     _redrawGlobalBar()
     await _save()
+
+    const label = chip.querySelector('.pb-chip-label')
+    label.contentEditable = 'true'
+    label.focus()
 }
 
 async function _deleteStep(barId, stepId) {
@@ -440,6 +484,29 @@ async function _deleteStep(barId, stepId) {
     if (!bar) return
     bar.steps = (bar.steps ?? []).filter(s => s.id !== stepId)
     _container.querySelector(`.pb-chip[data-step-id="${stepId}"]`)?.remove()
+    _redrawGlobalBar()
+    await _save()
+}
+
+async function _toggleBarOptional(barId) {
+    const bar = (_page.bars ?? []).find(b => b.id === barId)
+    if (!bar) return
+    bar.optional = !bar.optional
+    const row = _container.querySelector(`.pb-bar-row[data-bar-id="${barId}"]`)
+    if (row) row.replaceWith(_buildBarRow(bar))
+    _refreshBarNums()
+    _redrawGlobalBar()
+    await _save()
+}
+
+async function _toggleStepOptional(barId, stepId) {
+    const bar = (_page.bars ?? []).find(b => b.id === barId)
+    if (!bar) return
+    const step = (bar.steps ?? []).find(s => s.id === stepId)
+    if (!step) return
+    step.optional = !step.optional
+    const chip = _container.querySelector(`.pb-chip[data-step-id="${stepId}"]`)
+    if (chip) chip.replaceWith(_buildChip(barId, step))
     _redrawGlobalBar()
     await _save()
 }

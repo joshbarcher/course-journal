@@ -3,6 +3,7 @@ import { escapeHtml } from '../utils.js'
 import { refreshSidebarItem } from '../sidebar.js'
 import { segmentColor, globalSegments } from './progress-helpers.js'
 import { fireParticles } from '../particles.js'
+import { showContextMenu } from './context-menu.js'
 
 const STATES = ['started', 'working', 'done']
 const STATE_LABELS = { started: 'STARTED', working: 'WORKING', done: 'DONE' }
@@ -77,7 +78,7 @@ function _redrawGlobalBar() {
     }
     for (const seg of segs) {
         const el = document.createElement('div')
-        el.className = 'progress-global-seg'
+        el.className = 'progress-global-seg' + (seg.optional ? ' progress-global-seg--optional' : '')
         el.style.background = seg.color
         el.title = seg.label || `Task ${seg.num}`
         el.dataset.num = seg.num
@@ -92,7 +93,7 @@ function _redrawGlobalBar() {
 
 function _buildTaskEl(task) {
     const el = document.createElement('div')
-    el.className = 'progress-task'
+    el.className = 'progress-task' + (task.optional ? ' progress-task--optional' : '')
     el.dataset.id = task.id
 
     const handle = document.createElement('div')
@@ -107,9 +108,17 @@ function _buildTaskEl(task) {
     titleEl.contentEditable = 'true'
     titleEl.textContent = task.title ?? ''
     titleEl.setAttribute('aria-label', 'Task title')
+    titleEl.addEventListener('mousedown', e => { if (e.button === 2) e.preventDefault() })
     titleEl.addEventListener('blur', e => _onTitleBlur(task.id, e.target.textContent.trim()))
     titleEl.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); e.target.blur() } })
     el.appendChild(titleEl)
+
+    if (task.optional) {
+        const tag = document.createElement('span')
+        tag.className = 'progress-optional-tag'
+        tag.textContent = 'OPTIONAL'
+        el.appendChild(tag)
+    }
 
     const btns = document.createElement('div')
     btns.className = 'progress-state-btns'
@@ -125,12 +134,16 @@ function _buildTaskEl(task) {
     }
     el.appendChild(btns)
 
-    const del = document.createElement('button')
-    del.className = 'progress-task-delete'
-    del.innerHTML = '&times;'
-    del.setAttribute('aria-label', 'Delete task')
-    del.addEventListener('click', () => _deleteTask(task.id))
-    el.appendChild(del)
+    el.addEventListener('contextmenu', e => {
+        showContextMenu(e, [
+            {
+                label: task.optional ? 'Unmark Optional' : 'Mark Optional',
+                action: () => _toggleTaskOptional(task.id),
+            },
+            'separator',
+            { label: 'Delete', danger: true, action: () => _deleteTask(task.id) },
+        ])
+    })
 
     _attachTaskDrag(el)
 
@@ -202,8 +215,8 @@ async function _onStateClick(taskId, state, btnEl) {
     _refreshTaskEl(taskId)
     _redrawGlobalBar()
     if (task.state === 'done' && prev !== 'done') {
-        const tasks = _page.tasks ?? []
-        if (tasks.length > 0 && tasks.every(t => t.state === 'done')) {
+        const required = (_page.tasks ?? []).filter(t => !t.optional)
+        if (required.length > 0 && required.every(t => t.state === 'done')) {
             fireParticles(btnEl, _page.title)
         }
     }
@@ -230,9 +243,8 @@ async function _addTask() {
     _page.tasks = [...(_page.tasks ?? []), task]
 
     const list = _container.querySelector('[data-role="task-list"]')
-    const addBtn = _container.querySelector('[data-role="add-task"]')
     const el = _buildTaskEl(task)
-    list.insertBefore(el, null)
+    list.appendChild(el)
     _redrawGlobalBar()
     el.querySelector('.progress-task-title').focus()
     await _save()
@@ -242,6 +254,16 @@ async function _deleteTask(taskId) {
     _page.tasks = (_page.tasks ?? []).filter(t => t.id !== taskId)
     const el = _container.querySelector(`.progress-task[data-id="${taskId}"]`)
     el?.remove()
+    _redrawGlobalBar()
+    await _save()
+}
+
+async function _toggleTaskOptional(taskId) {
+    const task = (_page.tasks ?? []).find(t => t.id === taskId)
+    if (!task) return
+    task.optional = !task.optional
+    const el = _container.querySelector(`.progress-task[data-id="${taskId}"]`)
+    if (el) el.replaceWith(_buildTaskEl(task))
     _redrawGlobalBar()
     await _save()
 }

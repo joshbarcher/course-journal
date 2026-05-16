@@ -29,6 +29,9 @@ function resetPageState(page) {
     if (page.type === 'notes') {
         return { ...page, notes: [] }
     }
+    if (page.type === 'list') {
+        return { ...page, items: (page.items ?? []).map(i => ({ ...i, done: false })) }
+    }
     return page
 }
 

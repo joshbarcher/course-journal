@@ -154,25 +154,6 @@
     background: color-mix(in srgb, var(--state-color, var(--clr-accent)) 12%, transparent);
 }
 
-/* ── Delete button ────────────────────────────────────────────────────────────── */
-.progress-task-delete {
-    opacity: 0;
-    padding: 4px 8px;
-    border-radius: var(--radius);
-    font-size: 17px;
-    line-height: 1;
-    color: var(--clr-text-muted);
-    transition: opacity var(--transition), color var(--transition);
-    flex-shrink: 0;
-}
-
-.progress-task:hover .progress-task-delete {
-    opacity: 1;
-}
-
-.progress-task-delete:hover {
-    color: var(--clr-text);
-}
 
 /* ── Add task / step buttons ──────────────────────────────────────────────────── */
 .progress-add-btn {
@@ -402,33 +383,6 @@
     padding: 1px 3px;
 }
 
-.pb-chip-del {
-    position: absolute;
-    top: -5px;
-    right: -5px;
-    width: 15px;
-    height: 15px;
-    border-radius: 50%;
-    background: var(--clr-bg-raised);
-    border: 1px solid var(--clr-border);
-    font-size: 10px;
-    line-height: 1;
-    color: var(--clr-text-muted);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    opacity: 0;
-    transition: opacity var(--transition), color var(--transition);
-    padding: 0;
-}
-
-.pb-chip:hover .pb-chip-del {
-    opacity: 1;
-}
-
-.pb-chip-del:hover {
-    color: var(--clr-text);
-}
 
 .pb-chip-add {
     width: 34px;
@@ -449,6 +403,55 @@
 .pb-chip-add:hover {
     border-color: var(--clr-border-hi);
     color: var(--clr-text);
+}
+
+/* ── Optional indicators ──────────────────────────────────────────────────────── */
+.progress-task--optional {
+    border-style: dashed;
+}
+
+.pb-bar-row--optional {
+    border-style: dashed;
+}
+
+.pb-bar-row--optional-done {
+    border-style: solid;
+    border-color: #4ecdc4;
+    box-shadow:
+        0 0 0 1px rgba(78, 205, 196, 0.6),
+        0 0 12px 4px rgba(78, 205, 196, 0.5),
+        0 0 28px 8px rgba(78, 205, 196, 0.2);
+}
+
+.pb-chip--optional {
+    outline: 1px dashed rgba(255, 255, 255, 0.3);
+    outline-offset: 2px;
+}
+
+.pb-chip--optional-done {
+    outline: 2px solid #4ecdc4;
+    outline-offset: 2px;
+    box-shadow:
+        0 0 8px 3px rgba(78, 205, 196, 0.55),
+        0 0 22px 6px rgba(78, 205, 196, 0.2);
+}
+
+.progress-optional-tag {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--clr-text-muted);
+    border: 1px solid var(--clr-border);
+    border-radius: 3px;
+    padding: 2px 5px;
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+.progress-global-seg--optional {
+    opacity: 0.6;
+    border: 1px dashed rgba(255, 255, 255, 0.25);
 }
 
 /* ── Mobile ───────────────────────────────────────────────────────────────────── */
@@ -478,7 +481,7 @@
         width: auto;
     }
 
-    /* Chips fill the full row below num+title+actions */
+    /* Chips fill the full row below num+title */
     .pb-chips {
         flex-basis: 100%;
         flex-wrap: nowrap;
@@ -486,9 +489,7 @@
         margin-top: 8px;
     }
 
-    /* Always show action buttons and drag handle (no hover on touch) */
-    .pb-copy-btn,
-    .pb-del-btn,
+    /* Always show drag handle (no hover on touch) */
     .pb-bar-handle {
         opacity: 0.6;
     }
@@ -505,34 +506,7 @@
         justify-content: flex-start;
     }
 
-    .progress-task-delete,
     .progress-task-handle {
         opacity: 0.6;
     }
-}
-
-/* ── Copy / Delete bar buttons ────────────────────────────────────────────────── */
-.pb-copy-btn,
-.pb-del-btn {
-    font-size: 16px;
-    line-height: 1;
-    padding: 4px 7px;
-    color: var(--clr-text-muted);
-    border-radius: var(--radius);
-    transition: color var(--transition), opacity var(--transition);
-    opacity: 0;
-    flex-shrink: 0;
-}
-
-.pb-bar-row:hover .pb-copy-btn,
-.pb-bar-row:hover .pb-del-btn {
-    opacity: 1;
-}
-
-.pb-copy-btn:hover {
-    color: var(--clr-accent);
-}
-
-.pb-del-btn:hover {
-    color: var(--clr-text);
 }

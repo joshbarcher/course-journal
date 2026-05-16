@@ -167,9 +167,6 @@
     font-weight: 400;
 }
 
-.list-item--done .list-item-title {
-    opacity: 0.5;
-}
 
 /* ── Delete button ───────────────────────────────────────────────────────────── */
 .list-item-delete {

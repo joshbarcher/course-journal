@@ -377,8 +377,7 @@ async function _toggleOrdered(toggleBtn) {
 
 async function _save() {
     try {
-        const updated = await api.pages.update(_page.id, { items: _page.items, ordered: _page.ordered })
-        Object.assign(_page, updated)
+        await api.pages.update(_page.id, { items: _page.items, ordered: _page.ordered })
         refreshSidebarItem({ ..._page })
     } catch (err) {
         console.error('Failed to save list', err)

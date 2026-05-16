@@ -22,17 +22,35 @@ const PORT = process.env.PORT ?? 8060
 await getCourseService().load()
 logger.info('Course data loaded')
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
     logger.info('Server listening', { port: PORT })
 })
 
-async function shutdown(signal) {
-    logger.info(`${signal} received — shutting down`)
-    await getCourseService().close()
-    process.exit(0)
+let _shuttingDown = false
+
+async function shutdown(reason, exitCode = 0) {
+    if (_shuttingDown) return
+    _shuttingDown = true
+    logger.info(`Shutting down (${reason})`)
+
+    await new Promise(resolve => {
+        server.closeAllConnections?.()
+        server.close(resolve)
+    })
+
+    try {
+        await getCourseService().close()
+    } catch (err) {
+        logger.error('Flush failed during shutdown', { err })
+    }
+    process.exit(exitCode)
 }
 
-process.on('SIGTERM', () => shutdown('SIGTERM'))
-process.on('SIGINT',  () => shutdown('SIGINT'))
+process.on('SIGTERM',             () => shutdown('SIGTERM'))
+process.on('SIGINT',              () => shutdown('SIGINT'))
+process.on('SIGHUP',              () => shutdown('SIGHUP'))
+process.on('beforeExit',          () => shutdown('beforeExit'))
+process.on('uncaughtException',   (err) => { logger.error('Uncaught exception', { err }); shutdown('uncaughtException', 1) })
+process.on('unhandledRejection',  (reason) => { logger.error('Unhandled rejection', { reason }); shutdown('unhandledRejection', 1) })
 
 export default app

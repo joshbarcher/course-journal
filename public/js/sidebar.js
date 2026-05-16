@@ -1,6 +1,7 @@
 import { api } from './api.js'
 import { escapeHtml, progressPercent } from './utils.js'
 import { confirmDialog, showError } from './dialog.js'
+import { percentToColor } from './views/progress-helpers.js'
 
 let _pages = []
 let _onNavigate = null
@@ -141,14 +142,14 @@ function buildItem(page, isActive) {
         content.innerHTML = `
             <span class="sidebar-item-title">${escapeHtml(page.title)}</span>
             <div class="sidebar-progress-track">
-                <div class="sidebar-progress-fill" style="width:${pct}%"></div>
+                <div class="sidebar-progress-fill" style="width:${pct}%;background:${percentToColor(pct)}"></div>
             </div>`
     } else if (page.type === 'progress' || page.type === 'progress-bars') {
         const pct = progressPercent(page)
         content.innerHTML = `
             <span class="sidebar-item-title">${escapeHtml(page.title)}</span>
             <div class="sidebar-progress-track">
-                <div class="sidebar-progress-fill" style="width:${pct}%"></div>
+                <div class="sidebar-progress-fill" style="width:${pct}%;background:${percentToColor(pct)}"></div>
             </div>`
     } else if (page.type === 'notes') {
         const count = page.notes?.length ?? 0

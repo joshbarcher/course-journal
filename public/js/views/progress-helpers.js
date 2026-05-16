@@ -11,7 +11,7 @@ export function segmentColor(state) {
 }
 
 export function barProgressPercent(bar) {
-    const steps = bar.steps ?? []
+    const steps = (bar.steps ?? []).filter(s => !s.optional)
     if (!steps.length) return 0
     const done = steps.filter(s => s.state === 'done').length
     return Math.round((done / steps.length) * 100)
@@ -52,6 +52,8 @@ export function globalSegments(page) {
             color:      segmentColor(t.state),
             label:      t.title,
             stateLabel: stateLabel(t.state),
+            optional:   !!t.optional,
+            done:       t.state === 'done',
         }))
     }
     if (page.type === 'progress-bars') {
@@ -62,6 +64,8 @@ export function globalSegments(page) {
                 color:      percentToColor(pct),
                 label:      b.title,
                 stateLabel: percentToStateLabel(pct),
+                optional:   !!b.optional,
+                done:       pct >= 100,
             }
         })
     }
@@ -71,6 +75,8 @@ export function globalSegments(page) {
             color:      item.done ? STATE_COLORS.done : DIM,
             label:      item.title,
             stateLabel: item.done ? 'Done' : '',
+            optional:   false,
+            done:       !!item.done,
         }))
     }
     return []

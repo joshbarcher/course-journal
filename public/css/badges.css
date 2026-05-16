@@ -148,6 +148,31 @@
     word-break: break-word;
 }
 
+/* ── Super badge (required + all optional done) ───────────────────────────────── */
+.badge--super {
+    animation: badge-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both, badge-super-pulse 2.5s 0.6s ease-in-out infinite;
+}
+
+@keyframes badge-super-pulse {
+    0%, 100% {
+        box-shadow:
+            0 4px 20px rgba(0, 0, 0, 0.5),
+            inset 0 1px 0 rgba(255, 255, 255, 0.25);
+    }
+    50% {
+        box-shadow:
+            0 4px 20px rgba(0, 0, 0, 0.5),
+            inset 0 1px 0 rgba(255, 255, 255, 0.25),
+            0 0 0 10px rgba(255, 255, 255, 0.1),
+            0 0 28px 14px rgba(255, 255, 255, 0.07);
+    }
+}
+
+.badge--super .badge-icon {
+    display: flex;
+    gap: 3px;
+}
+
 /* ── Completion toast ─────────────────────────────────────────────────────────── */
 .completion-toast {
     position: fixed;

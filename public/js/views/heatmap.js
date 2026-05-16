@@ -1,4 +1,4 @@
-import { escapeHtml, progressPercent } from '../utils.js'
+import { escapeHtml, progressPercent, isSuperComplete } from '../utils.js'
 import { getCourseId } from '../course-context.js'
 import { heatmapRows } from './progress-helpers.js'
 
@@ -53,13 +53,17 @@ export function renderHeatmap(pages, container) {
         } else {
             for (const cell of row.cells) {
                 const cellEl = document.createElement('a')
-                cellEl.className = 'heatmap-cell'
+                let cls = 'heatmap-cell'
+                if (cell.optional && cell.done)  cls += ' heatmap-cell--optional-done'
+                else if (cell.optional)           cls += ' heatmap-cell--optional'
+                cellEl.className = cls
                 cellEl.href = href
                 cellEl.style.background = cell.color
                 cellEl.title = [
                     row.title,
                     cell.label || `#${cell.num}`,
                     cell.stateLabel,
+                    cell.optional ? '(optional)' : null,
                 ].filter(Boolean).join(' · ')
                 cellsEl.appendChild(cellEl)
             }
@@ -73,7 +77,7 @@ export function renderHeatmap(pages, container) {
 }
 
 function _renderBadges(pages, container) {
-    const eligible  = pages.filter(p => p.type === 'progress' || p.type === 'progress-bars')
+    const eligible  = pages.filter(p => p.type === 'progress' || p.type === 'progress-bars' || p.type === 'list')
     const completed = eligible.filter(p => progressPercent(p) === 100)
     if (!completed.length) return
 
@@ -95,18 +99,19 @@ function _renderBadges(pages, container) {
     }
 
     completed.forEach((page, i) => {
-        const theme = BADGE_THEMES[i % BADGE_THEMES.length]
-        const icon  = BADGE_ICONS[i % BADGE_ICONS.length]
-        row.appendChild(_buildBadge(icon, page.title, theme))
+        const theme   = BADGE_THEMES[i % BADGE_THEMES.length]
+        const icon    = BADGE_ICONS[(i + 2) % BADGE_ICONS.length]
+        const isSuper = isSuperComplete(page)
+        const extraClass = isSuper ? ' badge--super' : ''
+        row.appendChild(_buildBadge(icon, page.title, theme + extraClass, false, isSuper))
     })
 
     container.appendChild(section)
 }
 
-function _buildBadge(icon, title, themeClass, large = false) {
+function _buildBadge(icon, title, themeClass, large = false, isSuper = false) {
     const wrap = document.createElement('div')
     wrap.className = 'badge-wrap'
-    // stagger animation delay by position in DOM
     wrap.style.animationDelay = `${Math.random() * 0.15}s`
 
     const badge = document.createElement('div')
@@ -114,7 +119,14 @@ function _buildBadge(icon, title, themeClass, large = false) {
 
     const iconEl = document.createElement('div')
     iconEl.className = 'badge-icon'
-    iconEl.textContent = icon
+    if (isSuper) {
+        const s1 = document.createElement('span'); s1.textContent = icon
+        const s2 = document.createElement('span'); s2.textContent = icon
+        iconEl.appendChild(s1)
+        iconEl.appendChild(s2)
+    } else {
+        iconEl.textContent = icon
+    }
     badge.appendChild(iconEl)
     wrap.appendChild(badge)
 

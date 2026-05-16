@@ -62,6 +62,19 @@
     cursor: default;
 }
 
+/* ── Optional cells ───────────────────────────────────────────────────────────── */
+.heatmap-cell--optional {
+    outline: 1.5px dashed rgba(255, 255, 255, 0.2);
+    outline-offset: -2px;
+}
+
+.heatmap-cell--optional-done {
+    box-shadow:
+        0 0 0 2px rgba(255, 255, 255, 0.6),
+        0 0 12px 4px rgba(255, 255, 255, 0.45),
+        0 0 28px 8px rgba(255, 255, 255, 0.18);
+}
+
 @media (max-width: 768px) {
     .heatmap-row {
         flex-direction: column;

@@ -24,3 +24,11 @@ try {
 
 const server = spawn('node', ['--env-file', '.env', 'src/server.js'], { stdio: 'inherit' })
 server.on('exit', code => process.exit(code ?? 0))
+
+// Ctrl+C sends SIGINT to the whole process group — both boot.js and server.js
+// receive it simultaneously. Let server.js run its graceful shutdown and exit;
+// boot.js will then exit via the 'exit' listener above. Without this handler
+// Node.js would terminate boot.js immediately, disrupting the child's async
+// shutdown before it can flush pending data.
+process.on('SIGINT',  () => {})
+process.on('SIGTERM', () => server.kill('SIGTERM'))

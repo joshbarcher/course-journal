@@ -22,8 +22,9 @@ export function renderCourses(courses, container, onNavigate) {
         container.appendChild(empty)
     }
 
-    for (const course of courses) {
-        grid.appendChild(buildCourseCard(course, onNavigate))
+    const sorted = [...courses].sort((a, b) => a.title.localeCompare(b.title, undefined, { sensitivity: 'base' }))
+    for (const course of sorted) {
+        grid.appendChild(buildCourseCard(course, grid, onNavigate).card)
     }
 
     const addBtn = document.createElement('button')
@@ -42,7 +43,7 @@ export function renderCourses(courses, container, onNavigate) {
     container.appendChild(addBtn)
 }
 
-function buildCourseCard(course, onNavigate) {
+function buildCourseCard(course, grid, onNavigate) {
     const card = document.createElement('div')
     card.className = 'course-card'
 
@@ -58,11 +59,7 @@ function buildCourseCard(course, onNavigate) {
     const actionsEl = document.createElement('div')
     actionsEl.className = 'course-card-actions'
 
-    const renameBtn = document.createElement('button')
-    renameBtn.className = 'course-card-btn'
-    renameBtn.textContent = 'Rename'
-    renameBtn.addEventListener('click', async (e) => {
-        e.stopPropagation()
+    const triggerRename = async () => {
         const newTitle = await inputDialog('Rename Course', 'Course name…', course.title)
         if (!newTitle || newTitle === course.title) return
         try {
@@ -72,7 +69,12 @@ function buildCourseCard(course, onNavigate) {
         } catch (err) {
             showError(`Failed to rename: ${err.message}`)
         }
-    })
+    }
+
+    const renameBtn = document.createElement('button')
+    renameBtn.className = 'course-card-btn'
+    renameBtn.textContent = 'Rename'
+    renameBtn.addEventListener('click', async (e) => { e.stopPropagation(); await triggerRename() })
 
     const copyBtn = document.createElement('button')
     copyBtn.className = 'course-card-btn'
@@ -83,7 +85,12 @@ function buildCourseCard(course, onNavigate) {
             copyBtn.textContent = 'Copying…'
             copyBtn.disabled = true
             const copy = await api.courses.copy(course.id)
-            onNavigate(`c:${copy.id}`)
+            copyBtn.textContent = 'Copy'
+            copyBtn.disabled = false
+            const { card: newCard, triggerRename: renameCopy } = buildCourseCard(copy, grid, onNavigate)
+            grid.appendChild(newCard)
+            newCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+            await renameCopy()
         } catch (err) {
             showError(`Failed to copy: ${err.message}`)
             copyBtn.textContent = 'Copy'
@@ -115,7 +122,7 @@ function buildCourseCard(course, onNavigate) {
 
     loadMiniHeatmap(course.id, heatEl)
 
-    return card
+    return { card, triggerRename }
 }
 
 async function loadMiniHeatmap(courseId, container) {
