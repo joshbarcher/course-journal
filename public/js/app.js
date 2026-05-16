@@ -28,6 +28,21 @@ toggleBtn.addEventListener('click', () => {
 
 overlayEl.addEventListener('click', closeMobileSidebar)
 
+document.addEventListener('paste', e => {
+    const target = e.target
+    if (!target.isContentEditable && target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA') return
+    e.preventDefault()
+    const text = e.clipboardData.getData('text/plain')
+    if (target.isContentEditable) {
+        document.execCommand('insertText', false, text)
+    } else {
+        const start = target.selectionStart
+        const end   = target.selectionEnd
+        target.value = target.value.slice(0, start) + text + target.value.slice(end)
+        target.selectionStart = target.selectionEnd = start + text.length
+    }
+})
+
 async function init() {
     document.getElementById('sidebar-add-btn')?.addEventListener('click', addNewPage)
     await navigate(getRouteFromHash())
