@@ -220,17 +220,24 @@ function _showSubtaskInput(itemId, row, addBtn) {
     input.placeholder = 'Subtask name…'
     input.maxLength = 80
 
-    const confirm = () => {
+    const close = () => {
         const val = input.value.trim()
         input.remove()
         addBtn.style.display = ''
         if (val) _addSubtask(itemId, val, row, addBtn)
     }
     input.addEventListener('keydown', e => {
-        if (e.key === 'Enter') { e.preventDefault(); confirm() }
+        if (e.key === 'Enter') {
+            e.preventDefault()
+            const val = input.value.trim()
+            if (val) {
+                _addSubtask(itemId, val, row, addBtn)
+                input.value = ''
+            }
+        }
         if (e.key === 'Escape') { input.remove(); addBtn.style.display = '' }
     })
-    input.addEventListener('blur', confirm)
+    input.addEventListener('blur', close)
 
     row.insertBefore(input, addBtn)
     input.focus()
