@@ -55,8 +55,8 @@ $DATA_DIR/
 | Type | Fields |
 |---|---|
 | `list` | `ordered: bool`, `items: [{ id, title, done, subtasks[] }]` |
-| `progress` | `tasks: [{ id, title, state: null|started|working|done }]`, `notes: string` |
-| `progress-bars` | `bars: [{ id, title, steps: [{ id, title, state }] }]`, `notes: string` |
+| `progress` | `tasks: [{ id, title, state: null\|started\|working\|done, optional?: bool }]`, `notes: string` |
+| `progress-bars` | `bars: [{ id, title, optional?: bool, steps: [{ id, title, state, optional?: bool }] }]`, `notes: string` |
 | `notes` | `notes: [{ id, text }]` |
 | `page` | `content: string` (rich text) |
 
@@ -134,7 +134,7 @@ Thin fetch wrapper. All methods return parsed JSON or throw. `pagesBase()` calls
 - Each item: `⠿` drag handle + content div + `⧉` dup button + `×` delete button.
 - `tabIndex = 0` on items + TOC button; ArrowUp/Down keyboard navigation via `_arrowNav()`.
 - HTML5 drag-and-drop for reorder; `_persistOrder()` fires `api.pages.reorder(ids)` on `dragend`.
-- Badges: list shows `done/total` (gold when all complete); notes shows count; progress/progress-bars shows a mini fill bar.
+- Badges: list shows `done/total` (gold when all complete); notes shows count; progress/progress-bars shows a mini fill bar colored using `percentToColor()` (same teal/gold/blue thresholds as the heatmap).
 - `refreshSidebarItem(updatedPage)` — replaces a single item in-place; all view modules call this after saving.
 
 ### Dialogs (`public/js/dialog.js`)
@@ -150,7 +150,24 @@ All browser-native `prompt`/`alert`/`confirm` replaced with Promise-based custom
 Convention: **gold = create/ok**, **red = destructive confirm**.
 
 ### Particles (`public/js/particles.js`)
-Canvas-based confetti burst. Fired when all steps in a progress-bar bar reach `done` state. Also fires on full progress-tracker completion. Shows a slide-up toast with the bar/task name. Uses a queue offset so multiple simultaneous toasts don't overlap.
+Canvas-based confetti burst. Fired when all **required** (non-optional) steps in a progress-bar bar reach `done`, and on full required-task completion in the progress tracker. Shows a slide-up toast with the bar/task name. Uses a queue offset so multiple simultaneous toasts don't overlap.
+
+### Global plain-text paste handler (`app.js`)
+A single `paste` listener on `document` strips rich text from all inputs and contentEditable elements app-wide:
+```js
+document.addEventListener('paste', e => {
+    const t = e.target
+    if (!t.isContentEditable && t.tagName !== 'INPUT' && t.tagName !== 'TEXTAREA') return
+    e.preventDefault()
+    const text = e.clipboardData.getData('text/plain')
+    if (t.isContentEditable) document.execCommand('insertText', false, text)
+    else {
+        const start = t.selectionStart, end = t.selectionEnd
+        t.value = t.value.slice(0, start) + text + t.value.slice(end)
+        t.selectionStart = t.selectionEnd = start + text.length
+    }
+})
+```
 
 ---
 
@@ -159,28 +176,35 @@ Canvas-based confetti burst. Fired when all steps in a progress-bar bar reach `d
 ### Progress tracker (`views/progress.js`)
 - Tasks list with Start / Working / Done state buttons.
 - State buttons styled with `--state-color` CSS var; active state gets colored border + tinted background via `color-mix()`.
-- Global summary bar at top (colored segments, one per task).
-- Completion detection: fires particles when every task hits `done`.
+- Global summary bar at top (colored segments, one per task). Optional task segments are dimmed with a dashed border.
+- Completion detection: fires particles when all **required** (non-optional) tasks hit `done`.
+- **Optional tasks**: right-click any task row → "Mark Optional" / "Unmark Optional". Optional tasks show a dashed row border and an `OPTIONAL` tag. They are excluded from `progressPercent()` and completion detection. The inline delete button is removed; delete is now in the context menu.
 - **Drag-to-reorder tasks**: `⠿` handle (absolutely positioned, hover-reveal). Handle `mousedown` sets `row.draggable = true`; `dragend` resets it. This prevents accidental drags when clicking state buttons or editing title. `_persistTaskOrder()` syncs `_page.tasks` from DOM order and saves.
+- **Right-click edit guard**: `mousedown` on the title contentEditable calls `e.preventDefault()` when `e.button === 2`, preventing right-click from focusing the field.
 
 ### Multi-bar progress (`views/progress-bars.js`)
 - Multiple named bars, each containing N step chips.
-- Global bar shows all bars as colored segments.
+- Global bar shows all bars as colored segments. Optional bar segments are dimmed.
 - Chips fill available horizontal space (`flex: 1`); `+` add-chip button aligned center (`align-self: center`).
-- Bar actions: `⧉` (copy, states reset) + `×` (delete) — both ghost icon buttons, hidden until row hover, revealed with opacity transition.
-- Copy duplicates bar structure with all step states reset to `null`, inserted immediately after the source bar.
-- Completion: fires particles when all chips in a single bar reach `done`.
+- Bar actions moved to **right-click context menu**: "Mark/Unmark Optional", "Duplicate" (states reset), "Delete". Inline copy/delete buttons removed.
+- Chip actions also in right-click menu: "Mark/Unmark Optional", "Delete". Inline delete button removed.
+- Copy preserves `optional` flags on bar and steps; all step states reset to `null`.
+- Completion: fires particles when all **required** (non-optional) chips in a bar reach `done`.
+- **Optional bars**: dashed border when incomplete; solid teal border with bright layered `box-shadow` glow when all required steps are done. `_refreshBarRowClass(barId)` updates this live as chips are cycled.
+- **Optional chips**: dashed outline when incomplete; same teal glow outline (`pb-chip--optional-done`) when done. `_applyChipState(chip, state, optional)` owns both class and style so they stay in sync.
 - **Drag-to-reorder bars**: `⠿` handle, same handle-only pattern as progress tracker. `_persistBarOrder()` syncs `_page.bars`, refreshes numbers, redraws global bar.
 - **Drag-to-reorder chips**: whole chip is `draggable="true"`. `dragstart` calls `stopPropagation()` so it never triggers a bar drag. Drop only accepted within the same bar (`parentElement` check). `_persistChipOrder(barId)` syncs `bar.steps` from DOM.
+- **Right-click edit guard**: `mousedown` with `e.button === 2` preventDefault on bar title and chip label to prevent focus on right-click.
 
 ### List (`views/list.js`)
 - **Ordered/unordered toggle**: small `# Ordered` / `• Unordered` button in header. Swaps number circles ↔ empty circles in-place (no full redraw). `ordered` field is included in every save so it persists across reloads.
 - **Number circles**: always show the position number — never replaced by a checkmark. `_renumber()` just sets `textContent = i + 1`.
 - **Bullet circles**: same 48×48px circle style as number circles, empty (no text or `::before` content). Purely decorative — uniform with ordered lists.
-- **Done button**: dedicated `✓` circle button (28px) on the right side of each row. Green (`#4ade80`) when done, transparent/dim when not. Done state: title gets strikethrough + 40% opacity. Number and bullet are unaffected by done state.
+- **Done button**: dedicated `✓` circle button (28px) on the right side of each row. Green (`#4ade80`) when done, transparent/dim when not. Marking done has no visual effect on the title (no strikethrough, no opacity change) — it's not a to-do list.
 - **Subtask chips**: inline add, drag-to-reorder within same item, drag to a different list item (chip moves to target item's subtask row, both items' arrays synced from DOM in one save).
 - **Item drag**: handle-only (`⠿`, absolutely positioned). `mousedown` on handle sets `el.draggable = true`; `dragend` resets it. This prevents chip drags from accidentally moving whole items.
 - **Cross-item chip drop**: handled in `_setupDragDrop`'s `drop` listener. When `_dragChipSrc` is set and the drop target is a `.list-item`, the chip is moved to that item's subtask row and both items' subtask arrays are synced from DOM.
+- List pages contribute to the heatmap and achievement badges (same as progress/progress-bars pages).
 
 ### Notes (`views/notes.js`)
 - Masonry 2-column grid (`columns: 2` CSS).
@@ -188,7 +212,16 @@ Canvas-based confetti burst. Fired when all steps in a progress-bar bar reach `d
 - Delete button uses `mousedown → preventDefault` to prevent premature blur before the click fires.
 
 ### Heatmap (`views/heatmap.js`)
-Course home view. One row per page; cells are colored by progress/completion state. Clicking a cell navigates to that page. Labels link to pages.
+Course home view. One row per page (progress, progress-bars, and list); cells are colored by progress/completion state. Clicking a cell navigates to that page. Labels link to pages.
+
+**Optional cell styling:**
+- Optional + incomplete: dashed outline on the cell.
+- Optional + done: bright white `box-shadow` glow (always-on, no animation) — radiates outward from the cell.
+
+**Achievement badges** appear below the heatmap when any eligible page reaches 100%:
+- One badge per completed page; icon and theme cycle independently so adjacent badges always differ.
+- Gold star "Course Complete" badge appears when all eligible pages are done.
+- **Super badge**: if a completed page also has `isSuperComplete()` true (all optional items done too), its badge gets a double icon (two of the same symbol side-by-side) and a pulsing `box-shadow` glow. Implemented by passing `isSuper` to `_buildBadge()` which renders two `<span>` children inside `.badge-icon`.
 
 ### Table of Contents (`views/toc.js`)
 Renders all pages as linked list. Links use full `#c:{courseId}:{pageId}` format (not bare IDs).
@@ -218,11 +251,12 @@ All CSS lives in `public/css/`. No build step. Split by concern:
 | `sidebar.css` | Sidebar items, badges, progress track, drag states |
 | `courses.css` | Course cards, heatmap mini-grid |
 | `pages.css` | Page header, page title editing styles |
-| `progress.css` | Progress tracker + multi-bar tracker |
+| `progress.css` | Progress tracker + multi-bar tracker; optional item styles and glow states |
 | `list.css` | List items, subtask chips |
 | `notes.css` | Notes input, card grid, card editing |
-| `heatmap.css` | Heatmap rows, cells, labels |
-| `badges.css` | Shared badge component |
+| `heatmap.css` | Heatmap rows, cells, labels, optional cell glow |
+| `badges.css` | Shared badge component; super badge glow |
+| `context-menu.css` | Right-click context menu (fixed position, fade-in animation, danger variant) |
 | `page.css` | Rich text page |
 
 ### Design tokens (CSS variables in `base.css`)
@@ -282,6 +316,45 @@ Used for sidebar items, progress tasks, progress-bars bar rows, and list items. 
 
 ### Child drag inside draggable parent
 When chips inside a bar row or list item need their own drag, the chip's `dragstart` calls `e.stopPropagation()` to prevent the parent row's handler from firing. Combined with the handle-only pattern on the parent, the two drag systems are fully independent. A module-level `_dragChipSrc` variable lets sibling event handlers (`dragover`, `drop`) detect which type of drag is active and branch accordingly.
+
+### Shared context menu (`views/context-menu.js`)
+`showContextMenu(event, items)` builds a fixed-position menu at the cursor, clamps it to the viewport, and auto-dismisses on outside `mousedown` or Escape. Items are `{ label, action, danger? }` or the string `'separator'`. One active menu at a time — a second call removes the first. Works for both desktop right-click and Android long-press (`contextmenu` event fires on both). Usage pattern in each view:
+```js
+el.addEventListener('contextmenu', e => {
+    showContextMenu(e, [
+        { label: 'Mark Optional', action: () => _toggleOptional(id) },
+        'separator',
+        { label: 'Delete', danger: true, action: () => _delete(id) },
+    ])
+})
+```
+To prevent right-click from focusing a `contentEditable` sibling, add a `mousedown` guard on the editable element:
+```js
+titleEl.addEventListener('mousedown', e => { if (e.button === 2) e.preventDefault() })
+```
+
+### Optional items pattern
+Any item type can carry an `optional: bool` flag. The contract:
+- `progressPercent()` in `utils.js` excludes optional items from the denominator — 100% means all *required* items are done.
+- `isSuperComplete(page)` returns true when all optional items are also done.
+- Particles fire on required-only completion. Super badge fires on `isSuperComplete`.
+- Visual layer: dashed border/outline when optional+incomplete; bright teal `box-shadow` glow when optional+done.
+- Toggle is in the right-click menu, not an inline button.
+
+### Graceful shutdown with a boot process (Windows/Node)
+When `boot.js` spawns `server.js` as a child process, Ctrl-C sends SIGINT to both. If boot.js has no handler it exits immediately, killing the async continuation in server.js before it can flush. Fix:
+```js
+// boot.js
+process.on('SIGINT',  () => {})           // ignore — let the child handle it
+process.on('SIGTERM', () => child.kill('SIGTERM'))
+```
+In `server.js`, drain in-flight HTTP connections before flushing:
+```js
+server.closeAllConnections?.()
+await new Promise(resolve => server.close(resolve))
+await getCourseService().close()          // now guaranteed to run
+```
+This pattern applies to any boot.js + child server setup on Windows.
 
 ---
 
