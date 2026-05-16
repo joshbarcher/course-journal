@@ -233,6 +233,8 @@ function _showSubtaskInput(itemId, row, addBtn) {
             if (val) {
                 _addSubtask(itemId, val, row, addBtn)
                 input.value = ''
+                row.insertBefore(input, addBtn)
+                input.focus()
             }
         }
         if (e.key === 'Escape') { input.remove(); addBtn.style.display = '' }
