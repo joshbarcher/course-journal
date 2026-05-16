@@ -101,7 +101,13 @@ function buildItemEl(item, position) {
     titleEl.spellcheck = false
     titleEl.textContent = item.title
     titleEl.addEventListener('keydown', e => {
-        if (e.key === 'Enter') { e.preventDefault(); titleEl.blur() }
+        if (e.key === 'Enter') {
+            e.preventDefault()
+            titleEl.blur()
+            const subtasksRow = el.querySelector('.list-subtasks')
+            const addBtn = subtasksRow?.querySelector('.subtask-add-btn')
+            if (subtasksRow && addBtn) _showSubtaskInput(item.id, subtasksRow, addBtn)
+        }
         if (e.key === 'Escape') { titleEl.textContent = item.title; titleEl.blur() }
     })
     titleEl.addEventListener('blur', () => _saveTitle(item.id, titleEl.textContent.trim()))
