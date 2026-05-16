@@ -168,8 +168,7 @@
 }
 
 .list-item--done .list-item-title {
-    opacity: 0.4;
-    text-decoration: line-through;
+    opacity: 0.5;
 }
 
 /* ── Delete button ───────────────────────────────────────────────────────────── */

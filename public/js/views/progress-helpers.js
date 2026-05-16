@@ -37,11 +37,11 @@ export function percentToStateLabel(pct) {
     return ''
 }
 
-// Returns heatmap row data for all progress/progress-bars pages.
+// Returns heatmap row data for all progress/progress-bars/list pages.
 // Pure — no DOM, fully testable in Node.
 export function heatmapRows(pages) {
     return pages
-        .filter(p => p.type === 'progress' || p.type === 'progress-bars')
+        .filter(p => p.type === 'progress' || p.type === 'progress-bars' || p.type === 'list')
         .map(p => ({ id: p.id, title: p.title, cells: globalSegments(p) }))
 }
 
@@ -64,6 +64,14 @@ export function globalSegments(page) {
                 stateLabel: percentToStateLabel(pct),
             }
         })
+    }
+    if (page.type === 'list') {
+        return (page.items ?? []).map((item, i) => ({
+            num:        i + 1,
+            color:      item.done ? STATE_COLORS.done : DIM,
+            label:      item.title,
+            stateLabel: item.done ? 'Done' : '',
+        }))
     }
     return []
 }

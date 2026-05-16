@@ -137,12 +137,11 @@ function buildItem(page, isActive) {
     if (page.type === 'list') {
         const items = page.items ?? []
         const done  = items.filter(i => i.done).length
-        const badge = items.length ? `${done}/${items.length}` : '0'
-        const allDone = items.length > 0 && done === items.length
+        const pct   = items.length ? Math.round((done / items.length) * 100) : 0
         content.innerHTML = `
-            <div class="sidebar-item-row">
-                <span class="sidebar-item-title">${escapeHtml(page.title)}</span>
-                <span class="sidebar-badge${allDone ? ' sidebar-badge--done' : ''}">${badge}</span>
+            <span class="sidebar-item-title">${escapeHtml(page.title)}</span>
+            <div class="sidebar-progress-track">
+                <div class="sidebar-progress-fill" style="width:${pct}%"></div>
             </div>`
     } else if (page.type === 'progress' || page.type === 'progress-bars') {
         const pct = progressPercent(page)
