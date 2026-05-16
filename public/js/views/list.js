@@ -292,6 +292,7 @@ async function _addItem() {
     const listEl = _container.querySelector('.list-items')
     const el = buildItemEl(newItem, _page.items.length)
     listEl.appendChild(el)
+    _container.querySelector('.list-add-btn')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
     el.querySelector('.list-item-title')?.focus()
 
     await _save()
