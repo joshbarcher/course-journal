@@ -193,10 +193,12 @@ function _onSelectionChange() {
     _updateToolbarState()
 }
 
-const _NO_SCROLL_KEYS = new Set([
-    'Shift', 'Control', 'Alt', 'Meta', 'CapsLock',
-    'Escape', 'F1', 'F2', 'F3', 'F4', 'F5', 'F6',
-    'F7', 'F8', 'F9', 'F10', 'F11', 'F12',
+// Keys that may move the caret to a position the browser won't auto-scroll to
+const _CARET_SCROLL_KEYS = new Set([
+    'Enter',
+    'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight',
+    'Home', 'End', 'PageUp', 'PageDown',
+    'Backspace', 'Delete',
 ])
 
 function _scrollCaretIntoView() {
@@ -204,21 +206,20 @@ function _scrollCaretIntoView() {
     if (!sel || sel.rangeCount === 0) return
     if (!_editor || !_editor.contains(sel.getRangeAt(0).startContainer)) return
     const range = sel.getRangeAt(0).cloneRange()
-    range.collapse(true)
+    range.collapse(false)
     const caretRect = range.getBoundingClientRect()
-    if (caretRect.height === 0) return  // degenerate rect — nothing to act on
+    if (!caretRect || caretRect.height === 0) return
     const editorRect = _editor.getBoundingClientRect()
     if (caretRect.bottom > editorRect.bottom) {
-        _editor.scrollTop += caretRect.bottom - editorRect.bottom + 8
+        _editor.scrollTop += caretRect.bottom - editorRect.bottom + 4
     } else if (caretRect.top < editorRect.top) {
-        _editor.scrollTop -= editorRect.top - caretRect.top + 8
+        _editor.scrollTop -= editorRect.top - caretRect.top + 4
     }
 }
 
 function _onInput() {
     clearTimeout(_saveTimer)
     _saveTimer = setTimeout(_save, 600)
-    _scrollCaretIntoView()
 }
 
 function _onKeydown(e) {
@@ -258,7 +259,7 @@ function _onKeydown(e) {
         }
     }
 
-    if (!_NO_SCROLL_KEYS.has(e.key)) {
+    if (_CARET_SCROLL_KEYS.has(e.key)) {
         setTimeout(_scrollCaretIntoView, 0)
     }
 }
