@@ -193,12 +193,20 @@ function _onSelectionChange() {
     _updateToolbarState()
 }
 
+const _NO_SCROLL_KEYS = new Set([
+    'Shift', 'Control', 'Alt', 'Meta', 'CapsLock',
+    'Escape', 'F1', 'F2', 'F3', 'F4', 'F5', 'F6',
+    'F7', 'F8', 'F9', 'F10', 'F11', 'F12',
+])
+
 function _scrollCaretIntoView() {
     const sel = window.getSelection()
     if (!sel || sel.rangeCount === 0) return
+    if (!_editor || !_editor.contains(sel.getRangeAt(0).startContainer)) return
     const range = sel.getRangeAt(0).cloneRange()
     range.collapse(true)
     const caretRect = range.getBoundingClientRect()
+    if (caretRect.height === 0) return  // degenerate rect — nothing to act on
     const editorRect = _editor.getBoundingClientRect()
     if (caretRect.bottom > editorRect.bottom) {
         _editor.scrollTop += caretRect.bottom - editorRect.bottom + 8
@@ -250,7 +258,9 @@ function _onKeydown(e) {
         }
     }
 
-    setTimeout(_scrollCaretIntoView, 0)
+    if (!_NO_SCROLL_KEYS.has(e.key)) {
+        setTimeout(_scrollCaretIntoView, 0)
+    }
 }
 
 // ── List indent/outdent (ported from static-pages/canvas.js) ─────────────────
