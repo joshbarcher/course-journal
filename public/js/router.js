@@ -81,6 +81,7 @@ export async function navigate(hash) {
     if (route.view === 'course-home') {
         setHash(`c:${courseId}`)
         setActiveItem('home')
+        mainEl().classList.remove('page-view-active')
         renderHeatmap(getPages(), mainEl())
         return
     }
@@ -88,6 +89,7 @@ export async function navigate(hash) {
     if (route.view === 'toc') {
         setHash(`c:${courseId}:toc`)
         setActiveItem('toc')
+        mainEl().classList.remove('page-view-active')
         renderToc(getPages(), mainEl(), courseId)
         return
     }
@@ -141,11 +143,13 @@ async function renderPageById(id) {
 }
 
 async function renderCourseList() {
+    mainEl().classList.remove('page-view-active')
     const courses = await api.courses.list()
     renderCourses(courses, mainEl(), navigate)
 }
 
 function renderPlaceholder(page) {
+    mainEl().classList.remove('page-view-active')
     const label = {
         list: 'List', progress: 'Progress Bar', notes: 'Notes', page: 'Page',
     }[page.type] ?? page.type

@@ -90,6 +90,20 @@
     caret-color: var(--clr-accent);
 }
 
+.page-view-active .page-header {
+    flex-shrink: 0;
+}
+
+.page-view-active .rt-toolbar {
+    flex-shrink: 0;
+}
+
+.page-view-active .rt-editor {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+}
+
 .rt-editor:focus {
     border-color: var(--clr-border-hi);
 }

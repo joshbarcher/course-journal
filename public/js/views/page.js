@@ -34,6 +34,7 @@ export function renderPage(page, container) {
 
     _page      = JSON.parse(JSON.stringify(page))
     _container = container
+    _container.classList.add('page-view-active')
     _draw()
 }
 

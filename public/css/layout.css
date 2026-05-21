@@ -32,6 +32,13 @@
     min-width: 0;
 }
 
+#main-content.page-view-active {
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    padding-bottom: 0;
+}
+
 /* ── Mobile hamburger (hidden on desktop) ───────────────────────────────────── */
 .sidebar-toggle {
     display: none;
