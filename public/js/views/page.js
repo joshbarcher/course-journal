@@ -193,9 +193,24 @@ function _onSelectionChange() {
     _updateToolbarState()
 }
 
+function _scrollCaretIntoView() {
+    const sel = window.getSelection()
+    if (!sel || sel.rangeCount === 0) return
+    const range = sel.getRangeAt(0).cloneRange()
+    range.collapse(true)
+    const caretRect = range.getBoundingClientRect()
+    const editorRect = _editor.getBoundingClientRect()
+    if (caretRect.bottom > editorRect.bottom) {
+        _editor.scrollTop += caretRect.bottom - editorRect.bottom + 8
+    } else if (caretRect.top < editorRect.top) {
+        _editor.scrollTop -= editorRect.top - caretRect.top + 8
+    }
+}
+
 function _onInput() {
     clearTimeout(_saveTimer)
     _saveTimer = setTimeout(_save, 600)
+    _scrollCaretIntoView()
 }
 
 function _onKeydown(e) {
@@ -234,6 +249,8 @@ function _onKeydown(e) {
             _handleListIndent(list, e.shiftKey)
         }
     }
+
+    setTimeout(_scrollCaretIntoView, 0)
 }
 
 // ── List indent/outdent (ported from static-pages/canvas.js) ─────────────────
