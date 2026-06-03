@@ -192,6 +192,27 @@ function buildItem(page, isActive) {
 
 // ── Item context menu ─────────────────────────────────────────────────────────
 
+const PROGRESS_TYPES = new Set(['list', 'progress', 'progress-bars'])
+
+function _resetPageData(page) {
+    if (page.type === 'list') {
+        return { ...page, items: (page.items ?? []).map(i => ({ ...i, done: false })) }
+    }
+    if (page.type === 'progress') {
+        return { ...page, tasks: (page.tasks ?? []).map(t => ({ ...t, state: null })), notes: '' }
+    }
+    if (page.type === 'progress-bars') {
+        return {
+            ...page,
+            bars: (page.bars ?? []).map(b => ({
+                ...b,
+                steps: (b.steps ?? []).map(s => ({ ...s, state: null }))
+            }))
+        }
+    }
+    return page
+}
+
 async function _showItemMenu(event, page, el) {
     let courses = []
     try { courses = await api.courses.list() } catch { /* show menu anyway */ }
@@ -211,7 +232,7 @@ async function _showItemMenu(event, page, el) {
         }))
         : [{ label: '(No other courses)', action: () => {} }]
 
-    showContextMenu(event, [
+    const items = [
         {
             label: 'Duplicate',
             action: async () => {
@@ -229,24 +250,44 @@ async function _showItemMenu(event, page, el) {
         },
         'separator',
         { label: 'Copy to…', submenu: copyToItems },
-        'separator',
-        {
-            label: 'Delete',
-            danger: true,
+    ]
+
+    if (PROGRESS_TYPES.has(page.type)) {
+        items.push('separator', {
+            label: 'Reset progress',
             action: async () => {
-                const confirmed = await confirmDialog(`Delete "${page.title}"?`, 'This will permanently remove this page.', 'Delete')
+                const confirmed = await confirmDialog(`Reset "${page.title}"?`, 'This will clear all progress on this page.', 'Reset')
                 if (!confirmed) return
                 try {
-                    await api.pages.remove(page.id)
-                    _pages = _pages.filter(p => p.id !== page.id)
-                    el.remove()
-                    if (_activeId === page.id) _onNavigate('toc')
+                    const { id: _id, createdAt: _c, updatedAt: _u, ...data } = _resetPageData(page)
+                    const updated = await api.pages.update(page.id, data)
+                    refreshSidebarItem(updated)
+                    if (_activeId === page.id) _onNavigate(page.id)
                 } catch (err) {
-                    showError(`Failed to delete: ${err.message}`)
+                    showError(`Failed to reset: ${err.message}`)
                 }
             }
+        })
+    }
+
+    items.push('separator', {
+        label: 'Delete',
+        danger: true,
+        action: async () => {
+            const confirmed = await confirmDialog(`Delete "${page.title}"?`, 'This will permanently remove this page.', 'Delete')
+            if (!confirmed) return
+            try {
+                await api.pages.remove(page.id)
+                _pages = _pages.filter(p => p.id !== page.id)
+                el.remove()
+                if (_activeId === page.id) _onNavigate('toc')
+            } catch (err) {
+                showError(`Failed to delete: ${err.message}`)
+            }
         }
-    ])
+    })
+
+    showContextMenu(event, items)
 }
 
 // ── Drag-to-reorder ───────────────────────────────────────────────────────────
