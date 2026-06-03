@@ -99,44 +99,25 @@
     cursor: pointer;
 }
 
-/* Duplicate button */
-.sidebar-item-dup {
-    font-size: 13px;
+/* Options menu button */
+.sidebar-item-menu {
+    font-size: 17px;
     line-height: 1;
     color: var(--clr-text-muted);
     opacity: 0;
     flex-shrink: 0;
-    padding: 0 3px;
+    padding: 0 4px;
+    letter-spacing: 0.05em;
     transition: opacity var(--transition), color var(--transition);
 }
 
-.sidebar-item:hover .sidebar-item-dup {
+.sidebar-item:hover .sidebar-item-menu {
     opacity: 0.55;
 }
 
-.sidebar-item-dup:hover {
+.sidebar-item-menu:hover {
     opacity: 1 !important;
     color: var(--clr-text);
-}
-
-/* Delete button */
-.sidebar-item-delete {
-    font-size: 16px;
-    line-height: 1;
-    color: var(--clr-text-muted);
-    opacity: 0;
-    flex-shrink: 0;
-    padding: 0 3px;
-    transition: opacity var(--transition), color var(--transition);
-}
-
-.sidebar-item:hover .sidebar-item-delete {
-    opacity: 0.55;
-}
-
-.sidebar-item-delete:hover {
-    opacity: 1 !important;
-    color: #dc5050;
 }
 
 /* Keyboard focus ring on sidebar items */

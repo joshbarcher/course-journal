@@ -39,6 +39,7 @@ export const api = {
         reorder: (ids)      => request('PUT',    `${pagesBase()}/order`, { ids }),
     },
     pagesFor: (courseId) => ({
-        list: () => request('GET', `/courses/${courseId}/pages`),
+        list:   ()       => request('GET',  `/courses/${courseId}/pages`),
+        create: (body)   => request('POST', `/courses/${courseId}/pages`, body),
     }),
 }

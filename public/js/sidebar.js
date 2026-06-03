@@ -2,6 +2,7 @@ import { api } from './api.js'
 import { escapeHtml, progressPercent } from './utils.js'
 import { confirmDialog, showError } from './dialog.js'
 import { percentToColor } from './views/progress-helpers.js'
+import { showContextMenu } from './views/context-menu.js'
 
 let _pages = []
 let _onNavigate = null
@@ -167,53 +168,84 @@ function buildItem(page, isActive) {
 
     content.addEventListener('click', () => _onNavigate(page.id))
 
-    // Duplicate button
-    const dupBtn = document.createElement('button')
-    dupBtn.className = 'sidebar-item-dup'
-    dupBtn.textContent = '⧉'
-    dupBtn.title = 'Duplicate page'
-    dupBtn.addEventListener('click', async (e) => {
+    // Options menu button
+    const menuBtn = document.createElement('button')
+    menuBtn.className = 'sidebar-item-menu'
+    menuBtn.textContent = '⋮'
+    menuBtn.title = 'Options'
+    menuBtn.addEventListener('click', async (e) => {
         e.stopPropagation()
-        try {
-            const { id: _id, createdAt: _c, updatedAt: _u, ...data } = page
-            const copy = await api.pages.create({ ...data, title: `${page.title} (copy)` })
-            // Insert after the current item in _pages and DOM
-            const idx = _pages.findIndex(p => p.id === page.id)
-            _pages.splice(idx + 1, 0, copy)
-            const fresh = buildItem(copy, false)
-            el.after(fresh)
-            _onNavigate(copy.id)
-        } catch (err) {
-            showError(`Failed to duplicate: ${err.message}`)
-        }
+        await _showItemMenu(e, page, el)
     })
-    el.appendChild(dupBtn)
+    el.appendChild(menuBtn)
 
-    // Delete button
-    const delBtn = document.createElement('button')
-    delBtn.className = 'sidebar-item-delete'
-    delBtn.textContent = '×'
-    delBtn.title = 'Delete page'
-    delBtn.addEventListener('click', async (e) => {
-        e.stopPropagation()
-        const confirmed = await confirmDialog(`Delete "${page.title}"?`, 'This will permanently remove this page.', 'Delete')
-        if (!confirmed) return
-        try {
-            await api.pages.remove(page.id)
-            _pages = _pages.filter(p => p.id !== page.id)
-            el.remove()
-            // If we deleted the active page, navigate to toc
-            if (_activeId === page.id) _onNavigate('toc')
-        } catch (err) {
-            showError(`Failed to delete: ${err.message}`)
-        }
+    el.addEventListener('contextmenu', async (e) => {
+        await _showItemMenu(e, page, el)
     })
-    el.appendChild(delBtn)
 
     // Drag-and-drop
     _attachDrag(el)
 
     return el
+}
+
+// ── Item context menu ─────────────────────────────────────────────────────────
+
+async function _showItemMenu(event, page, el) {
+    let courses = []
+    try { courses = await api.courses.list() } catch { /* show menu anyway */ }
+    const otherCourses = courses.filter(c => c.id !== _courseId)
+
+    const copyToItems = otherCourses.length
+        ? otherCourses.map(c => ({
+            label: c.title,
+            action: async () => {
+                try {
+                    const { id: _id, createdAt: _c, updatedAt: _u, ...data } = page
+                    await api.pagesFor(c.id).create(data)
+                } catch (err) {
+                    showError(`Failed to copy: ${err.message}`)
+                }
+            }
+        }))
+        : [{ label: '(No other courses)', action: () => {} }]
+
+    showContextMenu(event, [
+        {
+            label: 'Duplicate',
+            action: async () => {
+                try {
+                    const { id: _id, createdAt: _c, updatedAt: _u, ...data } = page
+                    const copy = await api.pages.create({ ...data, title: `${page.title} (copy)` })
+                    const idx = _pages.findIndex(p => p.id === page.id)
+                    _pages.splice(idx + 1, 0, copy)
+                    el.after(buildItem(copy, false))
+                    _onNavigate(copy.id)
+                } catch (err) {
+                    showError(`Failed to duplicate: ${err.message}`)
+                }
+            }
+        },
+        'separator',
+        { label: 'Copy to…', submenu: copyToItems },
+        'separator',
+        {
+            label: 'Delete',
+            danger: true,
+            action: async () => {
+                const confirmed = await confirmDialog(`Delete "${page.title}"?`, 'This will permanently remove this page.', 'Delete')
+                if (!confirmed) return
+                try {
+                    await api.pages.remove(page.id)
+                    _pages = _pages.filter(p => p.id !== page.id)
+                    el.remove()
+                    if (_activeId === page.id) _onNavigate('toc')
+                } catch (err) {
+                    showError(`Failed to delete: ${err.message}`)
+                }
+            }
+        }
+    ])
 }
 
 // ── Drag-to-reorder ───────────────────────────────────────────────────────────
