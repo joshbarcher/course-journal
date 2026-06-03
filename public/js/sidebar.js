@@ -180,6 +180,7 @@ function buildItem(page, isActive) {
     el.appendChild(menuBtn)
 
     el.addEventListener('contextmenu', async (e) => {
+        e.preventDefault()
         await _showItemMenu(e, page, el)
     })
 
