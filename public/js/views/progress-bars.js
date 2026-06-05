@@ -5,6 +5,11 @@ import { segmentColor, barProgressPercent, percentToColor, globalSegments, state
 import { fireParticles } from '../particles.js'
 import { showContextMenu } from './context-menu.js'
 
+const _uuid = crypto.randomUUID
+    ? () => crypto.randomUUID()
+    : () => ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>
+        (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16))
+
 const STATE_CYCLE = [null, 'started', 'working', 'done']
 
 // ── Module state ──────────────────────────────────────────────────────────────
@@ -412,7 +417,7 @@ function _onNotesInput(e) {
 }
 
 async function _addBar() {
-    const bar = { id: crypto.randomUUID(), title: '', steps: [] }
+    const bar = { id: _uuid(), title: '', steps: [] }
     _page.bars = [...(_page.bars ?? []), bar]
 
     const list = _container.querySelector('[data-role="bars-list"]')
@@ -433,11 +438,11 @@ async function _copyBar(sourceBarId) {
     const source = (_page.bars ?? []).find(b => b.id === sourceBarId)
     if (!source) return
     const newBar = {
-        id: crypto.randomUUID(),
+        id: _uuid(),
         title: source.title,
         optional: source.optional,
         steps: (source.steps ?? []).map(s => ({
-            id: crypto.randomUUID(),
+            id: _uuid(),
             title: s.title,
             optional: s.optional,
             state: null,
@@ -462,7 +467,7 @@ async function _copyBar(sourceBarId) {
 async function _addStep(barId) {
     const bar = (_page.bars ?? []).find(b => b.id === barId)
     if (!bar) return
-    const step = { id: crypto.randomUUID(), title: '', state: null }
+    const step = { id: _uuid(), title: '', state: null }
     bar.steps = [...(bar.steps ?? []), step]
 
     const row = _container.querySelector(`.pb-bar-row[data-bar-id="${barId}"]`)
