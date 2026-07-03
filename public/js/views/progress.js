@@ -80,10 +80,11 @@ function _redrawGlobalBar() {
         const el = document.createElement('div')
         el.className = 'progress-global-seg' + (seg.optional ? ' progress-global-seg--optional' : '')
         el.style.background = seg.color
-        el.title = seg.label || `Task ${seg.num}`
+        const title = seg.label || `Task ${seg.num}`
+        el.title = title
         el.dataset.num = seg.num
         el.innerHTML = `
-            <span class="progress-seg-num">${seg.num}</span>
+            <span class="progress-seg-title">${escapeHtml(title)}</span>
             ${seg.stateLabel ? `<span class="progress-seg-state">${seg.stateLabel}</span>` : ''}`
         bar.appendChild(el)
     }
@@ -103,6 +104,9 @@ function _buildTaskEl(task) {
     handle.addEventListener('mousedown', () => { el.draggable = true })
     el.appendChild(handle)
 
+    const textWrap = document.createElement('div')
+    textWrap.className = 'progress-task-text'
+
     const titleEl = document.createElement('div')
     titleEl.className = 'progress-task-title'
     titleEl.contentEditable = 'true'
@@ -111,7 +115,19 @@ function _buildTaskEl(task) {
     titleEl.addEventListener('mousedown', e => { if (e.button === 2) e.preventDefault() })
     titleEl.addEventListener('blur', e => _onTitleBlur(task.id, e.target.textContent.trim()))
     titleEl.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); e.target.blur() } })
-    el.appendChild(titleEl)
+    textWrap.appendChild(titleEl)
+
+    const subtitleEl = document.createElement('div')
+    subtitleEl.className = 'progress-task-subtitle'
+    subtitleEl.contentEditable = 'true'
+    subtitleEl.textContent = task.subtitle ?? ''
+    subtitleEl.setAttribute('aria-label', 'Task subtitle')
+    subtitleEl.addEventListener('mousedown', e => { if (e.button === 2) e.preventDefault() })
+    subtitleEl.addEventListener('blur', e => _onSubtitleBlur(task.id, e.target.textContent.trim()))
+    subtitleEl.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); e.target.blur() } })
+    textWrap.appendChild(subtitleEl)
+
+    el.appendChild(textWrap)
 
     if (task.optional) {
         const tag = document.createElement('span')
@@ -231,6 +247,13 @@ async function _onTitleBlur(taskId, newTitle) {
     await _save()
 }
 
+async function _onSubtitleBlur(taskId, newSubtitle) {
+    const task = (_page.tasks ?? []).find(t => t.id === taskId)
+    if (!task || task.subtitle === newSubtitle) return
+    task.subtitle = newSubtitle
+    await _save()
+}
+
 let _notesTimer = null
 function _onNotesInput(e) {
     _page.notes = e.target.value
@@ -239,7 +262,7 @@ function _onNotesInput(e) {
 }
 
 async function _addTask() {
-    const task = { id: crypto.randomUUID(), title: '', state: null }
+    const task = { id: crypto.randomUUID(), title: '', subtitle: '', state: null }
     _page.tasks = [...(_page.tasks ?? []), task]
 
     const list = _container.querySelector('[data-role="task-list"]')

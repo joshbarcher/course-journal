@@ -89,10 +89,11 @@ function _redrawGlobalBar() {
         const el = document.createElement('div')
         el.className = 'progress-global-seg' + (seg.optional ? ' progress-global-seg--optional' : '')
         el.style.background = seg.color
-        el.title = seg.label || `Bar ${seg.num}`
+        const title = seg.label || `Bar ${seg.num}`
+        el.title = title
         el.dataset.num = seg.num
         el.innerHTML = `
-            <span class="progress-seg-num">${seg.num}</span>
+            <span class="progress-seg-title">${escapeHtml(title)}</span>
             ${seg.stateLabel ? `<span class="progress-seg-state">${seg.stateLabel}</span>` : ''}`
         bar.appendChild(el)
     }
@@ -195,47 +196,34 @@ function _buildChip(barId, step) {
     const chip = document.createElement('div')
     chip.className = 'pb-chip'
     chip.dataset.stepId = step.id
+
+    const pin = document.createElement('span')
+    pin.className = 'pb-chip-pin'
+    pin.dataset.role = 'pin'
+    chip.appendChild(pin)
+
     _applyChipState(chip, step.state, step.optional)
 
-    const label = document.createElement('span')
-    label.className = 'pb-chip-label'
-    label.textContent = step.title ?? ''
-    chip.appendChild(label)
+    const title = document.createElement('span')
+    title.className = 'pb-chip-title'
+    title.textContent = step.title ?? ''
+    title.setAttribute('aria-label', 'Step title')
+    chip.appendChild(title)
 
-    const stateLabelEl = document.createElement('span')
-    stateLabelEl.className = 'pb-chip-state'
-    stateLabelEl.textContent = stateLabel(step.state)
-    chip.appendChild(stateLabelEl)
+    const subtitle = document.createElement('span')
+    subtitle.className = 'pb-chip-subtitle'
+    subtitle.textContent = step.subtitle ?? ''
+    subtitle.setAttribute('aria-label', 'Step subtitle')
+    chip.appendChild(subtitle)
 
-    // Click on chip body → cycle state (unless clicking the label)
+    // Click on chip body → cycle state (unless clicking title/subtitle)
     chip.addEventListener('click', e => {
-        if (label.contains(e.target)) return
+        if (title.contains(e.target) || subtitle.contains(e.target)) return
         _cycleStepState(barId, step.id, chip)
     })
 
-    // Click label → edit title
-    const enterLabelEdit = () => {
-        label.contentEditable = 'true'
-        label.focus()
-        const range = document.createRange()
-        range.selectNodeContents(label)
-        const sel = window.getSelection()
-        sel.removeAllRanges()
-        sel.addRange(range)
-    }
-    label.addEventListener('mousedown', e => { if (e.button === 2) e.preventDefault() })
-    label.addEventListener('click', e => {
-        e.stopPropagation()
-        if (label.contentEditable !== 'true') enterLabelEdit()
-    })
-    label.addEventListener('blur', e => {
-        label.contentEditable = 'false'
-        _onStepTitleBlur(barId, step.id, e.target.textContent.trim())
-    })
-    label.addEventListener('keydown', e => {
-        if (e.key === 'Enter') { e.preventDefault(); e.target.blur() }
-        if (e.key === 'Escape') { e.target.blur() }
-    })
+    _wireChipTextEdit(title, val => _onStepTitleBlur(barId, step.id, val))
+    _wireChipTextEdit(subtitle, val => _onStepSubtitleBlur(barId, step.id, val))
 
     // Right-click context menu (replaces inline delete button)
     chip.addEventListener('contextmenu', e => {
@@ -253,6 +241,32 @@ function _buildChip(barId, step) {
     _attachChipDrag(chip, barId)
 
     return chip
+}
+
+// Click-to-edit behavior shared by the chip title and subtitle spans.
+function _wireChipTextEdit(el, onCommit) {
+    const enterEdit = () => {
+        el.contentEditable = 'true'
+        el.focus()
+        const range = document.createRange()
+        range.selectNodeContents(el)
+        const sel = window.getSelection()
+        sel.removeAllRanges()
+        sel.addRange(range)
+    }
+    el.addEventListener('mousedown', e => { if (e.button === 2) e.preventDefault() })
+    el.addEventListener('click', e => {
+        e.stopPropagation()
+        if (el.contentEditable !== 'true') enterEdit()
+    })
+    el.addEventListener('blur', e => {
+        el.contentEditable = 'false'
+        onCommit(e.target.textContent.trim())
+    })
+    el.addEventListener('keydown', e => {
+        if (e.key === 'Enter') { e.preventDefault(); e.target.blur() }
+        if (e.key === 'Escape') { e.target.blur() }
+    })
 }
 
 // ── Bar drag-to-reorder ───────────────────────────────────────────────────────
@@ -351,10 +365,16 @@ async function _persistChipOrder(barId) {
 
 function _applyChipState(chip, state, optional = false) {
     chip.dataset.state = state ?? ''
-    chip.style.background = state ? segmentColor(state) : 'rgba(255,255,255,0.07)'
-    chip.style.color = state ? 'rgba(0,0,0,0.75)' : 'var(--clr-text-muted)'
-    const sl = chip.querySelector('.pb-chip-state')
-    if (sl) sl.textContent = stateLabel(state)
+    const color = segmentColor(state)
+    chip.style.background = state
+        ? `color-mix(in srgb, ${color} 16%, var(--clr-bg-raised))`
+        : 'var(--clr-bg-raised)'
+    chip.style.borderColor = state ? color : 'var(--clr-border)'
+    const pin = chip.querySelector('[data-role="pin"]')
+    if (pin) {
+        pin.style.background = state ? color : 'rgba(255,255,255,0.18)'
+        pin.title = stateLabel(state) || 'Not started'
+    }
     if (optional) {
         chip.classList.toggle('pb-chip--optional',      state !== 'done')
         chip.classList.toggle('pb-chip--optional-done', state === 'done')
@@ -409,6 +429,15 @@ async function _onStepTitleBlur(barId, stepId, newTitle) {
     await _save()
 }
 
+async function _onStepSubtitleBlur(barId, stepId, newSubtitle) {
+    const bar = (_page.bars ?? []).find(b => b.id === barId)
+    if (!bar) return
+    const step = (bar.steps ?? []).find(s => s.id === stepId)
+    if (!step || step.subtitle === newSubtitle) return
+    step.subtitle = newSubtitle
+    await _save()
+}
+
 let _notesTimer = null
 function _onNotesInput(e) {
     _page.notes = e.target.value
@@ -444,6 +473,7 @@ async function _copyBar(sourceBarId) {
         steps: (source.steps ?? []).map(s => ({
             id: _uuid(),
             title: s.title,
+            subtitle: s.subtitle,
             optional: s.optional,
             state: null,
         })),
@@ -467,7 +497,7 @@ async function _copyBar(sourceBarId) {
 async function _addStep(barId) {
     const bar = (_page.bars ?? []).find(b => b.id === barId)
     if (!bar) return
-    const step = { id: _uuid(), title: '', state: null }
+    const step = { id: _uuid(), title: '', subtitle: '', state: null }
     bar.steps = [...(bar.steps ?? []), step]
 
     const row = _container.querySelector(`.pb-bar-row[data-bar-id="${barId}"]`)
@@ -479,9 +509,9 @@ async function _addStep(barId) {
     _redrawGlobalBar()
     await _save()
 
-    const label = chip.querySelector('.pb-chip-label')
-    label.contentEditable = 'true'
-    label.focus()
+    const title = chip.querySelector('.pb-chip-title')
+    title.contentEditable = 'true'
+    title.focus()
 }
 
 async function _deleteStep(barId, stepId) {

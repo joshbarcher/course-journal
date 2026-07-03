@@ -26,10 +26,17 @@
     transform: scaleY(1.08);
 }
 
-.progress-seg-num {
-    font-size: 12px;
+.progress-seg-title {
+    font-size: 11px;
     font-weight: 700;
-    line-height: 1;
+    line-height: 1.25;
+    text-align: center;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    word-break: break-word;
+    padding: 0 4px;
 }
 
 .progress-seg-state {
@@ -100,8 +107,15 @@
     cursor: grabbing;
 }
 
-.progress-task-title {
+.progress-task-text {
     flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.progress-task-title {
     font-size: 14px;
     font-weight: 500;
     outline: none;
@@ -123,6 +137,31 @@
     color: var(--clr-text-muted);
     pointer-events: none;
     font-weight: 400;
+}
+
+.progress-task-subtitle {
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--clr-text-muted);
+    outline: none;
+    border-radius: 2px;
+    padding: 2px 5px;
+    word-break: break-word;
+    min-width: 0;
+    cursor: text;
+    -webkit-user-drag: none;
+}
+
+.progress-task-subtitle:focus {
+    background: rgba(255, 255, 255, 0.05);
+    outline: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.progress-task-subtitle:empty::before {
+    content: 'Subtitle…';
+    color: var(--clr-text-muted);
+    opacity: 0.6;
+    pointer-events: none;
 }
 
 /* ── State buttons ────────────────────────────────────────────────────────────── */
@@ -328,15 +367,17 @@
     position: relative;
     flex: 1;
     min-width: 0;
-    min-height: 48px;
+    min-height: 56px;
     border-radius: 4px;
-    padding: 6px 8px;
+    padding: 8px 10px 7px;
+    border: 1px solid var(--clr-border);
     cursor: pointer;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    transition: filter var(--transition), transform var(--transition);
+    gap: 2px;
+    transition: filter var(--transition), transform var(--transition), background var(--transition), border-color var(--transition);
     user-select: none;
     text-align: center;
 }
@@ -355,28 +396,57 @@
     outline-offset: 2px;
 }
 
-.pb-chip-label {
+.pb-chip-pin {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.25);
+    flex-shrink: 0;
+}
+
+.pb-chip-title {
     font-size: 11px;
-    font-weight: 600;
+    font-weight: 700;
     text-align: center;
     line-height: 1.3;
     word-break: break-word;
     outline: none;
     cursor: pointer;
+    color: var(--clr-text);
+    padding: 0 12px;
 }
 
-.pb-chip-state {
-    font-size: 9px;
-    font-weight: 600;
-    letter-spacing: 0.04em;
-    opacity: 0.7;
-    text-transform: uppercase;
-    margin-top: 3px;
-    line-height: 1;
-    min-height: 10px;
+.pb-chip-subtitle {
+    font-size: 9.5px;
+    font-weight: 500;
+    text-align: center;
+    line-height: 1.25;
+    word-break: break-word;
+    outline: none;
+    cursor: pointer;
+    color: var(--clr-text-muted);
+    padding: 0 12px;
 }
 
-.pb-chip-label[contenteditable="true"] {
+.pb-chip-title:empty::before {
+    content: 'Step title…';
+    color: var(--clr-text-muted);
+    font-weight: 400;
+    pointer-events: none;
+}
+
+.pb-chip-subtitle:empty::before {
+    content: 'Subtitle…';
+    color: var(--clr-text-muted);
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.pb-chip-title[contenteditable="true"],
+.pb-chip-subtitle[contenteditable="true"] {
     cursor: text;
     outline: 1px dashed rgba(255, 255, 255, 0.4);
     border-radius: 2px;
