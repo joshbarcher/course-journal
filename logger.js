@@ -1,3 +1,7 @@
+// @ts-nocheck — copied verbatim per its own header comment below ("copy this
+// file into the project root"); it predates TypeScript in this codebase and
+// was never designed against checkJs, so it's excluded here rather than
+// reformatted with JSDoc types that could drift from the canonical copy.
 /**
  * @fileoverview Zero-dependency structured logger for Node.js ESM apps.
  *

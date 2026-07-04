@@ -1,3 +1,27 @@
-node_modules/
-.env
+node_modules
+
+# Output
+.output
+.vercel
+.netlify
+.wrangler
+/.svelte-kit
+/build
+.vscode
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Env
+.env.*
+!.env.example
+!.env.test
+!.env.production
+
+# Vite
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*
+
+# Local scratch data snapshot (see verification scripts)
 data/
