@@ -12,7 +12,9 @@ export default defineConfig({
 			},
 
 			// This app runs as a long-lived Node process (see start.js), not serverless.
-			adapter: adapter()
+			// BUILD_OUT_DIR lets scripts/build.mjs build into a staging directory
+			// and swap it into place atomically once complete - see that file.
+			adapter: adapter({ out: process.env.BUILD_OUT_DIR || 'build' })
 		})
 	],
 	test: {
