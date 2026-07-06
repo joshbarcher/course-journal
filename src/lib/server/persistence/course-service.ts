@@ -7,7 +7,9 @@ import logger from '../../../../logger.js';
 import { ManagedFile, type LogLevel } from './managed-file';
 import { CoursesFileSchema, type Course, type CoursesFile } from '$lib/schemas/course';
 import { JournalService } from './journal-service';
+import { LecturePlanService } from './lecture-plan-service';
 import type { Page } from '$lib/schemas/page';
+import type { LecturePlan, LectureWeek } from '$lib/schemas/lecture-plan';
 import { getEnv } from '../env';
 
 function now(): string {
@@ -49,6 +51,7 @@ export class CourseService {
 	private _coursesDir: string;
 	private _mf: ManagedFile<CoursesFile>;
 	private _journals: Map<string, JournalService>;
+	private _lecturePlans: Map<string, LecturePlanService>;
 
 	constructor(baseDir: string) {
 		this._baseDir = baseDir;
@@ -62,16 +65,22 @@ export class CourseService {
 			log
 		});
 		this._journals = new Map();
+		this._lecturePlans = new Map();
 	}
 
 	private _journalPath(courseId: string): string {
 		return path.join(this._coursesDir, `${courseId}.json`);
 	}
 
+	private _lecturePlanPath(courseId: string): string {
+		return path.join(this._coursesDir, `${courseId}.lecture-plan.json`);
+	}
+
 	async load(): Promise<void> {
 		await this._mf.load();
 		for (const course of this._mf.get().courses) {
 			await this._ensureJournal(course.id);
+			await this._ensureLecturePlan(course.id);
 		}
 	}
 
@@ -80,12 +89,18 @@ export class CourseService {
 		for (const js of this._journals.values()) {
 			await js.flush();
 		}
+		for (const lp of this._lecturePlans.values()) {
+			await lp.flush();
+		}
 	}
 
 	async close(): Promise<void> {
 		await this._mf.close();
 		for (const js of this._journals.values()) {
 			await js.close();
+		}
+		for (const lp of this._lecturePlans.values()) {
+			await lp.close();
 		}
 	}
 
@@ -98,10 +113,25 @@ export class CourseService {
 		return this._journals.get(courseId)!;
 	}
 
+	private async _ensureLecturePlan(courseId: string): Promise<LecturePlanService> {
+		if (!this._lecturePlans.has(courseId)) {
+			const lp = new LecturePlanService(this._lecturePlanPath(courseId));
+			await lp.load();
+			this._lecturePlans.set(courseId, lp);
+		}
+		return this._lecturePlans.get(courseId)!;
+	}
+
 	getJournal(courseId: string): JournalService {
 		const js = this._journals.get(courseId);
 		if (!js) throw new Error(`No journal for course ${courseId}`);
 		return js;
+	}
+
+	getLecturePlan(courseId: string): LecturePlanService {
+		const lp = this._lecturePlans.get(courseId);
+		if (!lp) throw new Error(`No lecture plan for course ${courseId}`);
+		return lp;
 	}
 
 	getAll(): Course[] {
@@ -123,6 +153,7 @@ export class CourseService {
 		const current = this._mf.get();
 		await this._mf.set({ courses: [...current.courses, course] });
 		await this._ensureJournal(course.id);
+		await this._ensureLecturePlan(course.id);
 		return course;
 	}
 
@@ -158,6 +189,16 @@ export class CourseService {
 		const journalPath = this._journalPath(id);
 		await fsp.unlink(journalPath).catch(() => {});
 		await fsp.unlink(journalPath + '.checkpoint.json').catch(() => {});
+
+		const lp = this._lecturePlans.get(id);
+		if (lp) {
+			await lp.close();
+			this._lecturePlans.delete(id);
+		}
+		const lecturePlanPath = this._lecturePlanPath(id);
+		await fsp.unlink(lecturePlanPath).catch(() => {});
+		await fsp.unlink(lecturePlanPath + '.checkpoint.json').catch(() => {});
+
 		return true;
 	}
 
@@ -166,6 +207,7 @@ export class CourseService {
 		if (!source) return null;
 		const sourceJournal = this.getJournal(id);
 		const sourcePages = sourceJournal.getAll();
+		const sourcePlan = this.getLecturePlan(id).getPlan();
 		const newCourse = await this.create({ title: `${source.title} (Copy)` });
 		const newJournal = this.getJournal(newCourse.id);
 		for (const page of sourcePages) {
@@ -173,6 +215,22 @@ export class CourseService {
 			const { id: _id, createdAt: _c, updatedAt: _u, ...rest } = page;
 			await newJournal.create(resetPageState(rest) as { type: Page['type']; title: string } & Record<string, unknown>);
 		}
+		const clonedPlan: LecturePlan = {
+			meetingDays: [...sourcePlan.meetingDays],
+			weeks: sourcePlan.weeks.map(
+				(week): LectureWeek => ({
+					id: randomUUID(),
+					days: {
+						mon: week.days.mon.map((c) => ({ ...c, id: randomUUID() })),
+						tue: week.days.tue.map((c) => ({ ...c, id: randomUUID() })),
+						wed: week.days.wed.map((c) => ({ ...c, id: randomUUID() })),
+						thu: week.days.thu.map((c) => ({ ...c, id: randomUUID() })),
+						fri: week.days.fri.map((c) => ({ ...c, id: randomUUID() }))
+					}
+				})
+			)
+		};
+		await this.getLecturePlan(newCourse.id).replacePlan(clonedPlan);
 		return newCourse;
 	}
 }

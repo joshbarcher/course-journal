@@ -84,6 +84,98 @@ export function dragReorder(node: HTMLElement, params: DragReorderParams) {
 	};
 }
 
+// Split variant of the action above, for cases where the whole draggable
+// element can't itself be `draggable=true` — e.g. a card containing a
+// <textarea>/<select>: wrapping the whole card in draggable=true breaks
+// native text selection and opening the select, since a mousedown-drag
+// inside them can be captured by the browser's own drag-start handling
+// instead of their normal interaction. `dragHandle` goes on a small dedicated
+// handle element (only it becomes draggable); `dropTarget` goes on the
+// card itself so dropping/hovering still works anywhere on the card, not
+// just over the tiny handle.
+export interface DragHandleParams {
+	id: string;
+	getState: () => DragReorderState;
+	setState: (state: DragReorderState) => void;
+}
+
+export function dragHandle(node: HTMLElement, params: DragHandleParams) {
+	let p = params;
+	node.draggable = true;
+
+	function onDragStart(e: DragEvent) {
+		e.stopPropagation();
+		p.setState({ draggingId: p.id, dragOverId: null });
+		if (e.dataTransfer) e.dataTransfer.effectAllowed = 'move';
+	}
+
+	function onDragEnd() {
+		p.setState({ draggingId: null, dragOverId: null });
+	}
+
+	node.addEventListener('dragstart', onDragStart);
+	node.addEventListener('dragend', onDragEnd);
+
+	return {
+		update(newParams: DragHandleParams) {
+			p = newParams;
+		},
+		destroy() {
+			node.removeEventListener('dragstart', onDragStart);
+			node.removeEventListener('dragend', onDragEnd);
+		}
+	};
+}
+
+export interface DropTargetParams {
+	id: string;
+	getState: () => DragReorderState;
+	setState: (state: DragReorderState) => void;
+	onDrop: (draggedId: string, targetId: string) => void;
+}
+
+export function dropTarget(node: HTMLElement, params: DropTargetParams) {
+	let p = params;
+
+	function onDragOver(e: DragEvent) {
+		const state = p.getState();
+		if (!state.draggingId || state.draggingId === p.id) return;
+		e.preventDefault();
+		e.stopPropagation();
+		if (state.dragOverId !== p.id) p.setState({ ...state, dragOverId: p.id });
+	}
+
+	function onDragLeave() {
+		const state = p.getState();
+		if (state.dragOverId === p.id) p.setState({ ...state, dragOverId: null });
+	}
+
+	function onDrop(e: DragEvent) {
+		const state = p.getState();
+		if (!state.draggingId) return;
+		e.preventDefault();
+		e.stopPropagation();
+		const draggedId = state.draggingId;
+		p.setState({ draggingId: null, dragOverId: null });
+		if (draggedId !== p.id) p.onDrop(draggedId, p.id);
+	}
+
+	node.addEventListener('dragover', onDragOver);
+	node.addEventListener('dragleave', onDragLeave);
+	node.addEventListener('drop', onDrop);
+
+	return {
+		update(newParams: DropTargetParams) {
+			p = newParams;
+		},
+		destroy() {
+			node.removeEventListener('dragover', onDragOver);
+			node.removeEventListener('dragleave', onDragLeave);
+			node.removeEventListener('drop', onDrop);
+		}
+	};
+}
+
 // Convenience helper for the common "reorder within one array" case: given
 // the displayed order and a dragged/target id pair, returns a new array
 // with the dragged item moved to the target's position.

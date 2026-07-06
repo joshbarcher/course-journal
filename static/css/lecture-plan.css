@@ -1,0 +1,341 @@
+/* ── Toolbar ──────────────────────────────────────────────────────────────────── */
+.lecture-plan-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+}
+
+/* ── Meeting pattern picker ───────────────────────────────────────────────────── */
+.lecture-plan-pattern {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.lecture-plan-pattern-label {
+    font-size: 12px;
+    color: var(--clr-text-muted);
+    letter-spacing: 0.03em;
+    margin-right: 2px;
+}
+
+.lecture-plan-pattern-day {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    padding: 5px 12px;
+    border: 1px solid var(--clr-border);
+    border-radius: 999px;
+    color: var(--clr-text-muted);
+    transition: border-color var(--transition), color var(--transition), background var(--transition);
+}
+
+.lecture-plan-pattern-day:hover {
+    border-color: var(--clr-border-hi);
+    color: var(--clr-text);
+}
+
+.lecture-plan-pattern-day--active {
+    border-color: var(--clr-accent);
+    background: var(--clr-accent-bg);
+    color: var(--clr-accent);
+}
+
+/* ── Add week button ──────────────────────────────────────────────────────────── */
+.lecture-plan-add-week-btn {
+    padding: 7px 16px;
+    border: 1px dashed var(--clr-border);
+    border-radius: var(--radius);
+    color: var(--clr-text-muted);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    transition: border-color var(--transition), color var(--transition), background var(--transition);
+    flex-shrink: 0;
+}
+
+.lecture-plan-add-week-btn:hover {
+    border-color: var(--clr-border-hi);
+    color: var(--clr-text);
+    background: var(--clr-bg-hover);
+}
+
+/* ── Weeks ────────────────────────────────────────────────────────────────────── */
+.lecture-plan-weeks {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* A <fieldset> — gets the label-embedded-in-the-border look natively, no
+   absolute-positioning tricks needed for the label itself. min-width:0
+   overrides the browser default fieldset intrinsic sizing so it never
+   fights the flex column above it. position:relative anchors the
+   separately-positioned remove button (see .lecture-week-remove). */
+.lecture-week {
+    position: relative;
+    min-width: 0;
+    background: var(--clr-bg-raised);
+    border: 1px solid var(--clr-border);
+    border-radius: var(--radius);
+    margin: 0;
+    padding: 2px 10px 10px;
+    transition: border-color var(--transition);
+}
+
+.lecture-week:hover {
+    border-color: var(--clr-border-hi);
+}
+
+.lecture-week-legend {
+    display: flex;
+    align-items: center;
+    margin-left: 2px;
+    padding: 0 4px;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+}
+
+/* Sits on the border at the opposite corner from the legend, styled as its
+   own small button (bg/border/radius matching the rail controls) rather
+   than trying to mimic the legend's native border-cutting behavior. */
+.lecture-week-remove {
+    position: absolute;
+    top: -28px;
+    right: -10px;
+    background: var(--clr-bg-raised);
+    border: 1px solid var(--clr-border);
+    border-radius: 3px;
+    padding: 1px 6px;
+    font-size: 14px;
+    line-height: 1.3;
+    color: var(--clr-text-muted);
+    transition: color var(--transition), border-color var(--transition);
+}
+
+.lecture-week-remove:hover {
+    color: var(--clr-text);
+    border-color: var(--clr-border-hi);
+}
+
+/* ── Day columns ──────────────────────────────────────────────────────────────── */
+.lecture-week-days {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    overflow-x: auto;
+}
+
+.lecture-day {
+    flex: 3 1 0;
+    min-width: 120px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    border-radius: var(--radius);
+    padding: 3px;
+    transition: flex-basis var(--transition);
+}
+
+/* The entire "shrink non-meeting days" implementation — everything else
+   about the element is unchanged, it just gets less horizontal room. Only
+   ever applied to a day with zero cards (see LecturePlanDay.svelte) — a
+   card's own controls need real width, so a day holding one always renders
+   full-size regardless of the meeting pattern. */
+.lecture-day--compact {
+    flex: 0 0 48px;
+    min-width: 48px;
+}
+
+.lecture-day--compact .lecture-day-add-btn {
+    padding: 3px;
+    font-size: 13px;
+}
+
+.lecture-day-header {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--clr-text-muted);
+    text-align: center;
+}
+
+.lecture-day-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.lecture-day-add-btn {
+    padding: 4px;
+    border: 1px dashed var(--clr-border);
+    border-radius: var(--radius);
+    color: var(--clr-text-muted);
+    font-size: 11px;
+    font-weight: 600;
+    transition: border-color var(--transition), color var(--transition), background var(--transition);
+}
+
+.lecture-day-add-btn:hover {
+    border-color: var(--clr-border-hi);
+    color: var(--clr-text);
+    background: var(--clr-bg-hover);
+}
+
+/* ── Lecture card ─────────────────────────────────────────────────────────────── */
+/* clr-bg-hover (not clr-bg-raised, which the week fieldset already uses) so
+   cards read as distinct raised chips against the week's own background.
+   Left rail (handle/duration/delete, stacked) + textarea filling the rest —
+   align-items:stretch (the flex default) is what keeps the textarea's own
+   box the same height as the rail, so its text starts at the true top
+   instead of looking vertically centered in a taller card. */
+.lecture-card {
+    display: flex;
+    align-items: stretch;
+    gap: 4px;
+    background: var(--clr-bg-hover);
+    border: 1px solid var(--clr-border);
+    border-radius: var(--radius);
+    padding: 3px;
+    transition: border-color var(--transition), opacity var(--transition);
+}
+
+.lecture-card:hover {
+    border-color: var(--clr-border-hi);
+}
+
+.lecture-card--dragging {
+    opacity: 0.35;
+}
+
+.lecture-card--drag-over {
+    border-color: var(--clr-accent);
+    background: var(--clr-accent-bg);
+}
+
+.lecture-card-rail {
+    flex: 0 0 auto;
+    /* min-width:0 overrides the flex-item default of min-width:auto, which
+       otherwise lets this column balloon past `width` to fit the select's
+       native intrinsic size (that's what made the dropdown look oversized). */
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    /* Sized to the widest possible option ("1h45") with no arrow — there's
+       no dynamic measurement here since the option set is fixed. */
+    width: 34px;
+}
+
+/* Same box treatment as the duration select below it (bg/border/radius/
+   width), so the whole rail reads as one uniform stack of controls. */
+.lecture-card-handle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    box-sizing: border-box;
+    background: var(--clr-bg-raised);
+    border: 1px solid var(--clr-border);
+    border-radius: 3px;
+    cursor: grab;
+    color: var(--clr-text-muted);
+    font-size: 12px;
+    line-height: 1;
+    padding: 1px 2px;
+    user-select: none;
+    transition: border-color var(--transition), color var(--transition);
+}
+
+.lecture-card-handle:hover {
+    border-color: var(--clr-border-hi);
+    color: var(--clr-text);
+}
+
+.lecture-card-handle:active {
+    cursor: grabbing;
+}
+
+/* appearance:none drops the browser's own arrow entirely (no replacement
+   chevron either) — that reserved arrow space was the last thing keeping
+   this from shrinking to just fit its text. */
+.lecture-card-duration {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    width: 100%;
+    min-width: 0;
+    background: var(--clr-bg-raised);
+    border: 1px solid var(--clr-border);
+    border-radius: 3px;
+    color: var(--clr-text);
+    font-family: var(--font-ui);
+    font-size: 10px;
+    padding: 1px 2px;
+    text-align: center;
+    cursor: pointer;
+}
+
+.lecture-card-duration:focus {
+    outline: none;
+    border-color: var(--clr-border-hi);
+}
+
+.lecture-card-delete {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    box-sizing: border-box;
+    background: var(--clr-bg-raised);
+    border: 1px solid var(--clr-border);
+    border-radius: 3px;
+    color: var(--clr-text-muted);
+    font-size: 13px;
+    line-height: 1;
+    padding: 1px 2px;
+    transition: color var(--transition), border-color var(--transition);
+}
+
+.lecture-card-delete:hover {
+    color: var(--clr-text);
+    border-color: var(--clr-border-hi);
+}
+
+/* Height is set inline by the autoGrow action (fits content on load and as
+   you type), so resize is off here — a manual drag-resize would just get
+   overwritten on the next keystroke anyway. */
+.lecture-card-topics {
+    display: block;
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 38px;
+    overflow: hidden;
+    background: transparent;
+    border: none;
+    color: var(--clr-text);
+    font-family: var(--font-ui);
+    font-size: 12.5px;
+    line-height: 1.4;
+    padding: 2px 2px 2px 4px;
+    outline: none;
+    resize: none;
+    box-sizing: border-box;
+}
+
+.lecture-card-topics:focus {
+    outline: 1px solid var(--clr-border-hi);
+    outline-offset: -1px;
+    border-radius: 2px;
+}
+
+.lecture-card-topics::placeholder {
+    color: var(--clr-text-muted);
+}

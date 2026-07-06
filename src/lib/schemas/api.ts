@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { VALID_PAGE_TYPES } from './page';
+import { WeekdaySchema } from './lecture-plan';
 
 // Request-body schemas for +server.ts handlers. These mirror the exact
 // validation currently done by src/controllers/coursesController.js and
@@ -34,4 +35,33 @@ export const UpdatePageBodySchema = z
 
 export const ReorderBodySchema = z.looseObject({
 	ids: z.array(z.string())
+});
+
+export const LecturePlanPatternBodySchema = z.looseObject({
+	days: z.array(WeekdaySchema)
+});
+
+// Client-provided id lets the UI add a week optimistically (render it
+// immediately, persist in the background) instead of waiting on the round
+// trip — same convention as CreateLectureCardBodySchema below.
+export const CreateLectureWeekBodySchema = z.looseObject({
+	id: z.string().optional()
+});
+
+export const CreateLectureCardBodySchema = z.looseObject({
+	id: z.string().optional(),
+	day: WeekdaySchema,
+	durationHours: z.number().min(0, 'durationHours must be 0 or greater'),
+	topics: z.string().optional()
+});
+
+// Same permissive-patch / merge-then-validate pattern as UpdatePageBodySchema.
+export const UpdateLectureCardBodySchema = z
+	.record(z.string(), z.unknown())
+	.refine((body) => !('id' in body), { message: 'id cannot be updated' });
+
+export const MoveLectureCardBodySchema = z.looseObject({
+	targetWeekId: z.string(),
+	targetDay: WeekdaySchema,
+	targetCardId: z.string().nullable().optional()
 });

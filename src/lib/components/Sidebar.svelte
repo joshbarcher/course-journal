@@ -27,6 +27,7 @@
 
 	let activeId = $derived.by(() => {
 		if (currentPage.route.id?.endsWith('/toc')) return 'toc';
+		if (currentPage.route.id?.endsWith('/lecture-plan')) return 'lecture-plan';
 		const pageId = (currentPage.params as { pageId?: string }).pageId;
 		return pageId ?? 'home';
 	});
@@ -86,6 +87,15 @@
 
 		<a class="sidebar-toc-btn" class:active={activeId === 'toc'} data-id="toc" href="/c/{courseId}/toc">
 			<span class="sidebar-toc-icon">&#9776;</span> Table of Contents
+		</a>
+
+		<a
+			class="sidebar-toc-btn"
+			class:active={activeId === 'lecture-plan'}
+			data-id="lecture-plan"
+			href="/c/{courseId}/lecture-plan"
+		>
+			<span class="sidebar-toc-icon">&#128197;</span> Weekly Lecture Plan
 		</a>
 
 		{#if pages.length === 0}

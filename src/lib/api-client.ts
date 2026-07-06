@@ -4,6 +4,7 @@
 // course-context.js singleton-active-course indirection.
 import type { Course } from '$lib/schemas/course';
 import type { Page, PageType } from '$lib/schemas/page';
+import type { LectureCard, LecturePlan, Weekday } from '$lib/schemas/lecture-plan';
 
 async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
 	const res = await fetch(path, {
@@ -58,4 +59,50 @@ export async function removeCourse(id: string): Promise<void> {
 
 export async function copyCourse(id: string): Promise<Course> {
 	return request<Course>('POST', `/api/courses/${id}/copy`);
+}
+
+// ── Weekly Lecture Plan ───────────────────────────────────────────────────
+
+export async function getLecturePlan(courseId: string): Promise<LecturePlan> {
+	return request<LecturePlan>('GET', `/api/courses/${courseId}/lecture-plan`);
+}
+
+export async function setMeetingPattern(courseId: string, days: Weekday[]): Promise<LecturePlan> {
+	return request<LecturePlan>('PUT', `/api/courses/${courseId}/lecture-plan/pattern`, { days });
+}
+
+export async function addLectureWeek(courseId: string, id?: string): Promise<LecturePlan> {
+	return request<LecturePlan>('POST', `/api/courses/${courseId}/lecture-plan/weeks`, { id });
+}
+
+export async function removeLectureWeek(courseId: string, weekId: string): Promise<void> {
+	await request<void>('DELETE', `/api/courses/${courseId}/lecture-plan/weeks/${weekId}`);
+}
+
+export async function addLectureCard(
+	courseId: string,
+	weekId: string,
+	data: { id?: string; day: Weekday; durationHours: number; topics?: string }
+): Promise<LectureCard> {
+	return request<LectureCard>('POST', `/api/courses/${courseId}/lecture-plan/weeks/${weekId}/cards`, data);
+}
+
+export async function updateLectureCard(
+	courseId: string,
+	cardId: string,
+	patch: Partial<{ durationHours: number; topics: string }>
+): Promise<LectureCard> {
+	return request<LectureCard>('PUT', `/api/courses/${courseId}/lecture-plan/cards/${cardId}`, patch);
+}
+
+export async function removeLectureCard(courseId: string, cardId: string): Promise<void> {
+	await request<void>('DELETE', `/api/courses/${courseId}/lecture-plan/cards/${cardId}`);
+}
+
+export async function moveLectureCard(
+	courseId: string,
+	cardId: string,
+	target: { targetWeekId: string; targetDay: Weekday; targetCardId: string | null }
+): Promise<void> {
+	await request<{ ok: true }>('PUT', `/api/courses/${courseId}/lecture-plan/cards/${cardId}/move`, target);
 }
