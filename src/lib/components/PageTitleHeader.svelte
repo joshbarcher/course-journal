@@ -10,13 +10,20 @@
 		courseId,
 		page,
 		subtitle,
+		onSave,
 		children
 	}: {
 		courseId: string;
 		page: { id: string; title: string };
 		subtitle?: string;
+		// Defaults to the page-rename convention (updatePage); pass this to
+		// reuse the same editable-title UI for a non-page record (e.g. a
+		// named lecture plan) that persists its title differently.
+		onSave?: (title: string) => Promise<unknown>;
 		children?: import('svelte').Snippet;
 	} = $props();
+
+	let save = $derived(onSave ?? ((title: string) => updatePage(courseId, page.id, { title })));
 
 	// Intentionally captures only the initial value: the parent keys this
 	// component by page.id (see the [pageId] route), so a genuinely new
@@ -40,7 +47,7 @@
 			return;
 		}
 		title = t;
-		await updatePage(courseId, page.id, { title: t });
+		await save(t);
 	}
 </script>
 

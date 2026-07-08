@@ -49,13 +49,31 @@ export const LectureWeekSchema = z.looseObject({
 });
 export type LectureWeek = z.infer<typeof LectureWeekSchema>;
 
+// A named, standalone record now (one course can have many) — same shape
+// family as Course/Page: id/title/timestamps plus its own content.
 export const LecturePlanSchema = z.looseObject({
+	id: z.string(),
+	title: z.string(),
+	createdAt: z.string(),
+	updatedAt: z.string(),
 	meetingDays: z.array(WeekdaySchema).default([]),
 	weeks: z.array(LectureWeekSchema).default([])
 });
 export type LecturePlan = z.infer<typeof LecturePlanSchema>;
 
-export const LecturePlanFileSchema = z.looseObject({
-	lecturePlan: LecturePlanSchema
+export const LecturePlansFileSchema = z.looseObject({
+	lecturePlans: z.array(LecturePlanSchema).default([])
 });
-export type LecturePlanFile = z.infer<typeof LecturePlanFileSchema>;
+export type LecturePlansFile = z.infer<typeof LecturePlansFileSchema>;
+
+// Pre-migration on-disk shape: a single unnamed plan per course, keyed by
+// courseId via the filename rather than an id field. Only used to read an
+// old `<courseId>.lecture-plan.json` file during the one-time migration in
+// CourseService — see its `_migrateLegacyLecturePlan`.
+export const LegacyLecturePlanFileSchema = z.looseObject({
+	lecturePlan: z.looseObject({
+		meetingDays: z.array(WeekdaySchema).default([]),
+		weeks: z.array(LectureWeekSchema).default([])
+	})
+});
+export type LegacyLecturePlanFile = z.infer<typeof LegacyLecturePlanFileSchema>;

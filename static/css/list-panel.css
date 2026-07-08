@@ -1,0 +1,148 @@
+/* Shared list-view styling for the Trackers / Documents / Weekly Planners
+   category pages (main content area) — rows, per-item menu, progress
+   indicators. Used by PageListRow.svelte, DocumentsList.svelte,
+   PlannersList.svelte, and Heatmap.svelte. */
+
+/* ── Group headings (Documents list) ───────────────────────────────────────── */
+.list-panel-group {
+    margin-bottom: 32px;
+}
+
+.list-panel-group-title {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--clr-text-muted);
+    margin-bottom: 12px;
+}
+
+/* ── Row container ────────────────────────────────────────────────────────── */
+.list-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: 900px;
+    margin-bottom: 24px;
+}
+
+.list-panel-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border: 1px solid var(--clr-border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    transition: border-color var(--transition), background var(--transition);
+}
+
+.list-panel-row:hover {
+    border-color: var(--clr-border-hi);
+    background: var(--clr-bg-hover);
+}
+
+.list-panel-row-content {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    text-decoration: none;
+    color: inherit;
+}
+
+.list-panel-row-title {
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.list-panel-row-meta {
+    font-size: 12px;
+    color: var(--clr-text-muted);
+    flex-shrink: 0;
+}
+
+/* ── Options menu button ──────────────────────────────────────────────────── */
+.list-panel-row-menu {
+    font-size: 18px;
+    line-height: 1;
+    color: var(--clr-text-muted);
+    opacity: 0;
+    flex-shrink: 0;
+    padding: 4px 6px;
+    transition: opacity var(--transition), color var(--transition);
+}
+
+.list-panel-row:hover .list-panel-row-menu {
+    opacity: 0.55;
+}
+
+.list-panel-row-menu:hover {
+    opacity: 1 !important;
+    color: var(--clr-text);
+}
+
+/* ── Tracker progress visuals ─────────────────────────────────────────────── */
+.list-panel-row-heat {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    flex-shrink: 0;
+    max-width: 320px;
+}
+
+.list-panel-heat-cell {
+    display: block;
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    flex-shrink: 0;
+}
+
+.list-panel-progress-track {
+    width: 140px;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.list-panel-progress-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.4s ease;
+    min-width: 2px;
+}
+
+/* ── Empty / add states ───────────────────────────────────────────────────── */
+.list-panel-empty {
+    color: var(--clr-text-muted);
+    font-size: 14px;
+    margin-bottom: 24px;
+}
+
+.list-panel-add-btn {
+    max-width: 900px;
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px dashed var(--clr-border);
+    border-radius: var(--radius);
+    color: var(--clr-text-muted);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    transition: border-color var(--transition), color var(--transition), background var(--transition);
+}
+
+.list-panel-add-btn:hover {
+    border-color: var(--clr-border-hi);
+    color: var(--clr-text);
+    background: var(--clr-bg-hover);
+}

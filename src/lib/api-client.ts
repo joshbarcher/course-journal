@@ -61,48 +61,71 @@ export async function copyCourse(id: string): Promise<Course> {
 	return request<Course>('POST', `/api/courses/${id}/copy`);
 }
 
-// ── Weekly Lecture Plan ───────────────────────────────────────────────────
+// ── Weekly Lecture Plans ──────────────────────────────────────────────────
 
-export async function getLecturePlan(courseId: string): Promise<LecturePlan> {
-	return request<LecturePlan>('GET', `/api/courses/${courseId}/lecture-plan`);
+export async function listLecturePlans(courseId: string): Promise<LecturePlan[]> {
+	return request<LecturePlan[]>('GET', `/api/courses/${courseId}/lecture-plans`);
 }
 
-export async function setMeetingPattern(courseId: string, days: Weekday[]): Promise<LecturePlan> {
-	return request<LecturePlan>('PUT', `/api/courses/${courseId}/lecture-plan/pattern`, { days });
+export async function getLecturePlanById(courseId: string, planId: string): Promise<LecturePlan> {
+	return request<LecturePlan>('GET', `/api/courses/${courseId}/lecture-plans/${planId}`);
 }
 
-export async function addLectureWeek(courseId: string, id?: string): Promise<LecturePlan> {
-	return request<LecturePlan>('POST', `/api/courses/${courseId}/lecture-plan/weeks`, { id });
+export async function createLecturePlan(courseId: string, title: string, id?: string): Promise<LecturePlan> {
+	return request<LecturePlan>('POST', `/api/courses/${courseId}/lecture-plans`, { title, id });
 }
 
-export async function removeLectureWeek(courseId: string, weekId: string): Promise<void> {
-	await request<void>('DELETE', `/api/courses/${courseId}/lecture-plan/weeks/${weekId}`);
+export async function renameLecturePlan(courseId: string, planId: string, title: string): Promise<LecturePlan> {
+	return request<LecturePlan>('PUT', `/api/courses/${courseId}/lecture-plans/${planId}`, { title });
+}
+
+export async function removeLecturePlan(courseId: string, planId: string): Promise<void> {
+	await request<void>('DELETE', `/api/courses/${courseId}/lecture-plans/${planId}`);
+}
+
+export async function setMeetingPattern(courseId: string, planId: string, days: Weekday[]): Promise<LecturePlan> {
+	return request<LecturePlan>('PUT', `/api/courses/${courseId}/lecture-plans/${planId}/pattern`, { days });
+}
+
+export async function addLectureWeek(courseId: string, planId: string, id?: string): Promise<LecturePlan> {
+	return request<LecturePlan>('POST', `/api/courses/${courseId}/lecture-plans/${planId}/weeks`, { id });
+}
+
+export async function removeLectureWeek(courseId: string, planId: string, weekId: string): Promise<void> {
+	await request<void>('DELETE', `/api/courses/${courseId}/lecture-plans/${planId}/weeks/${weekId}`);
 }
 
 export async function addLectureCard(
 	courseId: string,
+	planId: string,
 	weekId: string,
 	data: { id?: string; day: Weekday; durationHours: number; topics?: string }
 ): Promise<LectureCard> {
-	return request<LectureCard>('POST', `/api/courses/${courseId}/lecture-plan/weeks/${weekId}/cards`, data);
+	return request<LectureCard>('POST', `/api/courses/${courseId}/lecture-plans/${planId}/weeks/${weekId}/cards`, data);
 }
 
 export async function updateLectureCard(
 	courseId: string,
+	planId: string,
 	cardId: string,
 	patch: Partial<{ durationHours: number; topics: string }>
 ): Promise<LectureCard> {
-	return request<LectureCard>('PUT', `/api/courses/${courseId}/lecture-plan/cards/${cardId}`, patch);
+	return request<LectureCard>('PUT', `/api/courses/${courseId}/lecture-plans/${planId}/cards/${cardId}`, patch);
 }
 
-export async function removeLectureCard(courseId: string, cardId: string): Promise<void> {
-	await request<void>('DELETE', `/api/courses/${courseId}/lecture-plan/cards/${cardId}`);
+export async function removeLectureCard(courseId: string, planId: string, cardId: string): Promise<void> {
+	await request<void>('DELETE', `/api/courses/${courseId}/lecture-plans/${planId}/cards/${cardId}`);
 }
 
 export async function moveLectureCard(
 	courseId: string,
+	planId: string,
 	cardId: string,
 	target: { targetWeekId: string; targetDay: Weekday; targetCardId: string | null }
 ): Promise<void> {
-	await request<{ ok: true }>('PUT', `/api/courses/${courseId}/lecture-plan/cards/${cardId}/move`, target);
+	await request<{ ok: true }>(
+		'PUT',
+		`/api/courses/${courseId}/lecture-plans/${planId}/cards/${cardId}/move`,
+		target
+	);
 }

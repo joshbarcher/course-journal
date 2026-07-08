@@ -37,6 +37,15 @@ export const ReorderBodySchema = z.looseObject({
 	ids: z.array(z.string())
 });
 
+export const CreateLecturePlanBodySchema = z.looseObject({
+	title: z.string().min(1, 'title is required'),
+	id: z.string().optional()
+});
+
+export const UpdateLecturePlanBodySchema = z.looseObject({
+	title: z.string().min(1, 'title is required')
+});
+
 export const LecturePlanPatternBodySchema = z.looseObject({
 	days: z.array(WeekdaySchema)
 });

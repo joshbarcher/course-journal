@@ -318,27 +318,7 @@
     margin-bottom: 2px;
 }
 
-.sidebar-back-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.07em;
-    text-transform: uppercase;
-    color: var(--clr-text-muted);
-    text-decoration: none;
-    padding: 2px 0;
-    transition: color var(--transition);
-}
-
-.sidebar-back-link:hover {
-    color: var(--clr-accent);
-    text-decoration: none;
-}
-
 .sidebar-course-name {
-    margin-top: 10px;
     font-family: var(--font-title);
     font-size: 14px;
     font-weight: 600;

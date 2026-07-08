@@ -3,6 +3,7 @@
 	// here since #sidebar only exists on course-scoped routes.
 	import { afterNavigate } from '$app/navigation';
 	import Sidebar from '$lib/components/Sidebar.svelte';
+	import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
 	import type { LayoutProps } from './$types';
 
 	let { data, children }: LayoutProps = $props();
@@ -31,7 +32,10 @@
 
 	<Sidebar courseId={data.course.id} courseTitle={data.course.title} pages={data.pages} open={mobileOpen} />
 
-	<main id="main-content">
-		{@render children()}
-	</main>
+	<div id="content-column">
+		<Breadcrumbs courseId={data.course.id} courseTitle={data.course.title} pages={data.pages} />
+		<main id="main-content">
+			{@render children()}
+		</main>
+	</div>
 </div>

@@ -5,9 +5,11 @@
 		moveLectureCard,
 		removeLectureCard,
 		removeLectureWeek,
+		renameLecturePlan,
 		setMeetingPattern,
 		updateLectureCard
 	} from '$lib/api-client';
+	import PageTitleHeader from '$lib/components/PageTitleHeader.svelte';
 	import MeetingPatternPicker from '$lib/components/lecture-plan/MeetingPatternPicker.svelte';
 	import LecturePlanWeek from '$lib/components/lecture-plan/LecturePlanWeek.svelte';
 	import { emptyDayCards, findCard, moveCard, parseContainerKey } from '$lib/utils/lecture-plan-helpers';
@@ -17,7 +19,8 @@
 	let { courseId, plan: initialPlan }: { courseId: string; plan: LecturePlan } = $props();
 
 	// One-time copy-in — safe because the parent route keys this component by
-	// courseId (see +page.svelte), so a real navigation always gets a fresh instance.
+	// plan.id (see planners/[planId]/+page.svelte), so a real navigation
+	// always gets a fresh instance.
 	// svelte-ignore state_referenced_locally
 	let plan = $state<LecturePlan>(structuredClone(initialPlan));
 	let dragState = $state<DragReorderState>({ draggingId: null, dragOverId: null });
@@ -26,23 +29,20 @@
 
 	function onPatternChange(days: Weekday[]) {
 		plan = { ...plan, meetingDays: days };
-		setMeetingPattern(courseId, days).catch((err) => console.error('Failed to save meeting pattern', err));
+		setMeetingPattern(courseId, plan.id, days).catch((err) => console.error('Failed to save meeting pattern', err));
 	}
 
 	// Optimistic like every other mutator here: render the new week/card
 	// immediately with a client-generated id, persist in the background.
-	// These two used to await the round trip before updating `plan`, which
-	// is what made adding a week/card feel like it blocked for a couple of
-	// seconds — every other action here was already fire-and-forget.
 	function addWeek() {
 		const id = crypto.randomUUID();
 		plan = { ...plan, weeks: [...plan.weeks, { id, days: emptyDayCards() }] };
-		addLectureWeek(courseId, id).catch((err) => console.error('Failed to save new week', err));
+		addLectureWeek(courseId, plan.id, id).catch((err) => console.error('Failed to save new week', err));
 	}
 
 	function onRemoveWeek(weekId: string) {
 		plan = { ...plan, weeks: plan.weeks.filter((w) => w.id !== weekId) };
-		removeLectureWeek(courseId, weekId).catch((err) => console.error('Failed to remove week', err));
+		removeLectureWeek(courseId, plan.id, weekId).catch((err) => console.error('Failed to remove week', err));
 	}
 
 	function onAddCard(weekId: string, day: Weekday) {
@@ -53,7 +53,7 @@
 				w.id === weekId ? { ...w, days: { ...w.days, [day]: [...w.days[day], card] } } : w
 			)
 		};
-		addLectureCard(courseId, weekId, { id: card.id, day, durationHours: card.durationHours }).catch((err) =>
+		addLectureCard(courseId, plan.id, weekId, { id: card.id, day, durationHours: card.durationHours }).catch((err) =>
 			console.error('Failed to save new card', err)
 		);
 	}
@@ -67,7 +67,7 @@
 		dayArr[loc.cardIdx] = { ...dayArr[loc.cardIdx], ...patch };
 		weeks[loc.weekIdx] = { ...week, days: { ...week.days, [loc.day]: dayArr } };
 		plan = { ...plan, weeks };
-		updateLectureCard(courseId, cardId, patch).catch((err) => console.error('Failed to save card', err));
+		updateLectureCard(courseId, plan.id, cardId, patch).catch((err) => console.error('Failed to save card', err));
 	}
 
 	function onRemoveCard(cardId: string) {
@@ -77,7 +77,7 @@
 		const week = weeks[loc.weekIdx];
 		weeks[loc.weekIdx] = { ...week, days: { ...week.days, [loc.day]: week.days[loc.day].filter((c) => c.id !== cardId) } };
 		plan = { ...plan, weeks };
-		removeLectureCard(courseId, cardId).catch((err) => console.error('Failed to remove card', err));
+		removeLectureCard(courseId, plan.id, cardId).catch((err) => console.error('Failed to remove card', err));
 	}
 
 	function onCardDrop(draggedId: string, targetId: string) {
@@ -99,15 +99,20 @@
 		}
 
 		plan = moveCard(plan, draggedId, { weekId, day, beforeCardId });
-		moveLectureCard(courseId, draggedId, { targetWeekId: weekId, targetDay: day, targetCardId: beforeCardId }).catch(
-			(err) => console.error('Failed to save card move', err)
-		);
+		moveLectureCard(courseId, plan.id, draggedId, {
+			targetWeekId: weekId,
+			targetDay: day,
+			targetCardId: beforeCardId
+		}).catch((err) => console.error('Failed to save card move', err));
 	}
 </script>
 
-<div class="page-header">
-	<h1 class="page-title">Weekly Lecture Plan</h1>
-</div>
+<PageTitleHeader
+	{courseId}
+	page={{ id: plan.id, title: plan.title }}
+	subtitle="(Weekly Lecture Plan)"
+	onSave={(title) => renameLecturePlan(courseId, plan.id, title)}
+/>
 
 <div class="lecture-plan-toolbar">
 	<MeetingPatternPicker selected={plan.meetingDays} onChange={onPatternChange} />

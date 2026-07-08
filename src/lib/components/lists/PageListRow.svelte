@@ -1,41 +1,37 @@
 <script lang="ts">
-	// Ported from the per-item logic in public/js/sidebar.js's buildItem()
-	// and _showItemMenu(). Drag-to-reorder uses the shared dragReorder
-	// action instead of a copy-pasted block.
+	// Shared row for the Trackers and Documents list views — extracted from
+	// the old Sidebar's per-item menu (Duplicate / Copy to… / Reset progress
+	// / Delete), which now lives here instead since individual pages no
+	// longer appear in the sidebar. Unlike the old sidebar row, this one
+	// never coexists with the page it represents being open in the same
+	// view, so there's no "redirect away if this was the active page" case
+	// to handle on delete — deleting just removes the row from the list.
 	import { goto } from '$app/navigation';
 	import { showContextMenu, type ContextMenuItem } from '$lib/context-menu';
 	import { confirmDialog, showError } from '$lib/dialogs';
 	import { listCourses, createPage, updatePage, removePage } from '$lib/api-client';
 	import { progressPercent } from '$lib/utils/format';
-	import { percentToColor } from '$lib/utils/progress-helpers';
-	import { dragReorder, type DragReorderState } from '$lib/actions/dragReorder';
+	import { percentToColor, globalSegments } from '$lib/utils/progress-helpers';
 	import type { Page } from '$lib/schemas/page';
 
 	let {
 		page,
-		href,
-		isActive,
 		courseId,
-		dragState,
-		setDragState,
-		onDrop,
+		variant,
 		onDuplicated,
 		onDeleted,
 		onReset
 	}: {
 		page: Page;
-		href: string;
-		isActive: boolean;
 		courseId: string;
-		dragState: DragReorderState;
-		setDragState: (s: DragReorderState) => void;
-		onDrop: (draggedId: string, targetId: string) => void;
+		variant: 'tracker' | 'document';
 		onDuplicated: (copy: Page, afterId: string) => void;
 		onDeleted: (pageId: string) => void;
 		onReset: (updated: Page) => void;
 	} = $props();
 
-	const PROGRESS_TYPES = new Set(['list', 'progress', 'progress-bars']);
+	let href = $derived(`/c/${courseId}/${page.id}`);
+	let cells = $derived(variant === 'tracker' ? globalSegments(page) : []);
 
 	function resetPageData(p: Page): Record<string, unknown> {
 		if (p.type === 'list') {
@@ -98,7 +94,7 @@
 			{ label: 'Copy to…', submenu: copyToItems }
 		];
 
-		if (PROGRESS_TYPES.has(page.type)) {
+		if (variant === 'tracker') {
 			items.push('separator', {
 				label: 'Reset progress',
 				action: async () => {
@@ -127,7 +123,6 @@
 				try {
 					await removePage(courseId, page.id);
 					onDeleted(page.id);
-					if (isActive) goto(`/c/${courseId}/toc`);
 				} catch (err) {
 					showError(`Failed to delete: ${(err as Error).message}`);
 				}
@@ -136,53 +131,31 @@
 
 		showContextMenu(event, items);
 	}
-
-	function onKeydown(e: KeyboardEvent) {
-		if (e.key === 'Enter') {
-			e.preventDefault();
-			goto(href);
-		}
-	}
 </script>
 
-<!-- svelte-ignore a11y_no_static_element_interactions -->
-<div
-	class="sidebar-item"
-	class:active={isActive}
-	class:sidebar-item--dragging={dragState.draggingId === page.id}
-	class:sidebar-item--drag-over={dragState.dragOverId === page.id}
-	data-id={page.id}
-	tabindex="0"
-	role="link"
-	oncontextmenu={onMenu}
-	onkeydown={onKeydown}
-	use:dragReorder={{
-		id: page.id,
-		getState: () => dragState,
-		setState: setDragState,
-		onDrop
-	}}
->
-	<span class="sidebar-drag-handle" title="Drag to reorder">⠿</span>
+<div class="list-panel-row">
+	<a class="list-panel-row-content" {href}>
+		<span class="list-panel-row-title">{page.title}</span>
 
-	<a class="sidebar-item-content" {href} onclick={(e) => e.stopPropagation()}>
-		{#if page.type === 'list' || page.type === 'progress' || page.type === 'progress-bars'}
+		{#if variant === 'tracker'}
 			{@const pct = progressPercent(page)}
-			<span class="sidebar-item-title">{page.title}</span>
-			<div class="sidebar-progress-track">
-				<div class="sidebar-progress-fill" style:width="{pct}%" style:background={percentToColor(pct)}></div>
+			<div class="list-panel-row-heat">
+				{#if cells.length}
+					{#each cells as cell (cell.num)}
+						<span class="list-panel-heat-cell" style:background={cell.color} title={cell.label}></span>
+					{/each}
+				{:else}
+					<div class="list-panel-progress-track">
+						<div class="list-panel-progress-fill" style:width="{pct}%" style:background={percentToColor(pct)}></div>
+					</div>
+				{/if}
 			</div>
 		{:else if page.type === 'notes'}
-			<div class="sidebar-item-row">
-				<span class="sidebar-item-title">{page.title}</span>
-				{#if page.notes.length > 0}<span class="sidebar-badge">{page.notes.length}</span>{/if}
-			</div>
+			<span class="list-panel-row-meta">{page.notes.length} note{page.notes.length === 1 ? '' : 's'}</span>
 		{:else}
-			<div class="sidebar-item-row">
-				<span class="sidebar-item-title">{page.title}</span>
-			</div>
+			<span class="list-panel-row-meta">Page</span>
 		{/if}
 	</a>
 
-	<button class="sidebar-item-menu" title="Options" onclick={onMenu}>⋮</button>
+	<button class="list-panel-row-menu" title="Options" onclick={onMenu}>⋮</button>
 </div>

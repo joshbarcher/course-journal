@@ -46,9 +46,12 @@ export function confirmDialog(title: string, body: string, confirmLabel = 'Confi
 	});
 }
 
-export function newPageDialog(): Promise<{ title: string; type: PageType } | null> {
+export function newPageDialog(
+	options: { dialogTitle?: string; allowedTypes?: PageType[] } = {}
+): Promise<{ title: string; type: PageType } | null> {
 	return new Promise((resolve) => {
 		const cleanup = mountDialog(NewPageDialog, {
+			...options,
 			onResolve: (result: { title: string; type: PageType } | null) => {
 				cleanup();
 				resolve(result);

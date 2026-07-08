@@ -7,9 +7,9 @@ import logger from '../../../../logger.js';
 import { ManagedFile, type LogLevel } from './managed-file';
 import { CoursesFileSchema, type Course, type CoursesFile } from '$lib/schemas/course';
 import { JournalService } from './journal-service';
-import { LecturePlanService } from './lecture-plan-service';
+import { LecturePlansService } from './lecture-plans-service';
 import type { Page } from '$lib/schemas/page';
-import type { LecturePlan, LectureWeek } from '$lib/schemas/lecture-plan';
+import { LegacyLecturePlanFileSchema, type LecturePlan, type LectureWeek } from '$lib/schemas/lecture-plan';
 import { getEnv } from '../env';
 
 function now(): string {
@@ -51,7 +51,7 @@ export class CourseService {
 	private _coursesDir: string;
 	private _mf: ManagedFile<CoursesFile>;
 	private _journals: Map<string, JournalService>;
-	private _lecturePlans: Map<string, LecturePlanService>;
+	private _lecturePlansServices: Map<string, LecturePlansService>;
 
 	constructor(baseDir: string) {
 		this._baseDir = baseDir;
@@ -65,14 +65,19 @@ export class CourseService {
 			log
 		});
 		this._journals = new Map();
-		this._lecturePlans = new Map();
+		this._lecturePlansServices = new Map();
 	}
 
 	private _journalPath(courseId: string): string {
 		return path.join(this._coursesDir, `${courseId}.json`);
 	}
 
-	private _lecturePlanPath(courseId: string): string {
+	private _lecturePlansPath(courseId: string): string {
+		return path.join(this._coursesDir, `${courseId}.lecture-plans.json`);
+	}
+
+	// Pre-migration singleton file — see _migrateLegacyLecturePlan.
+	private _legacyLecturePlanPath(courseId: string): string {
 		return path.join(this._coursesDir, `${courseId}.lecture-plan.json`);
 	}
 
@@ -80,7 +85,7 @@ export class CourseService {
 		await this._mf.load();
 		for (const course of this._mf.get().courses) {
 			await this._ensureJournal(course.id);
-			await this._ensureLecturePlan(course.id);
+			await this._ensureLecturePlans(course.id);
 		}
 	}
 
@@ -89,7 +94,7 @@ export class CourseService {
 		for (const js of this._journals.values()) {
 			await js.flush();
 		}
-		for (const lp of this._lecturePlans.values()) {
+		for (const lp of this._lecturePlansServices.values()) {
 			await lp.flush();
 		}
 	}
@@ -99,7 +104,7 @@ export class CourseService {
 		for (const js of this._journals.values()) {
 			await js.close();
 		}
-		for (const lp of this._lecturePlans.values()) {
+		for (const lp of this._lecturePlansServices.values()) {
 			await lp.close();
 		}
 	}
@@ -113,13 +118,56 @@ export class CourseService {
 		return this._journals.get(courseId)!;
 	}
 
-	private async _ensureLecturePlan(courseId: string): Promise<LecturePlanService> {
-		if (!this._lecturePlans.has(courseId)) {
-			const lp = new LecturePlanService(this._lecturePlanPath(courseId));
+	private async _ensureLecturePlans(courseId: string): Promise<LecturePlansService> {
+		if (!this._lecturePlansServices.has(courseId)) {
+			const lp = new LecturePlansService(this._lecturePlansPath(courseId));
 			await lp.load();
-			this._lecturePlans.set(courseId, lp);
+			// One-time migration: only attempted when the new plural file is
+			// still empty, i.e. it was just created fresh by ManagedFile's
+			// defaultValue rather than loaded from real content. Guards
+			// against re-migrating (and resurrecting a deleted plan) on a
+			// later restart by renaming the legacy file the moment it's
+			// consumed — see _migrateLegacyLecturePlan.
+			if (lp.getAll().length === 0) {
+				const migrated = await this._migrateLegacyLecturePlan(courseId);
+				if (migrated) await lp.replaceAll([migrated]);
+			}
+			this._lecturePlansServices.set(courseId, lp);
 		}
-		return this._lecturePlans.get(courseId)!;
+		return this._lecturePlansServices.get(courseId)!;
+	}
+
+	// Reads a pre-migration singleton `<courseId>.lecture-plan.json` (if one
+	// exists) and wraps its data into a single named LecturePlan. Renames
+	// the legacy file (+ checkpoint) to `.migrated` on success — never
+	// deleted, so the original bytes stay recoverable, but also never read
+	// again, so this can't fire twice for the same course.
+	private async _migrateLegacyLecturePlan(courseId: string): Promise<LecturePlan | null> {
+		const legacyPath = this._legacyLecturePlanPath(courseId);
+		let raw: string;
+		try {
+			raw = await fsp.readFile(legacyPath, 'utf8');
+		} catch {
+			return null;
+		}
+		let parsed: ReturnType<typeof LegacyLecturePlanFileSchema.parse>;
+		try {
+			parsed = LegacyLecturePlanFileSchema.parse(JSON.parse(raw));
+		} catch (err) {
+			log('warn', `Failed to parse legacy lecture plan for course ${courseId}, skipping migration`, err);
+			return null;
+		}
+		const migrated: LecturePlan = {
+			id: randomUUID(),
+			title: 'Weekly Lecture Plan',
+			createdAt: now(),
+			updatedAt: now(),
+			meetingDays: parsed.lecturePlan.meetingDays,
+			weeks: parsed.lecturePlan.weeks
+		};
+		await fsp.rename(legacyPath, legacyPath + '.migrated').catch(() => {});
+		await fsp.rename(legacyPath + '.checkpoint.json', legacyPath + '.checkpoint.json.migrated').catch(() => {});
+		return migrated;
 	}
 
 	getJournal(courseId: string): JournalService {
@@ -128,9 +176,9 @@ export class CourseService {
 		return js;
 	}
 
-	getLecturePlan(courseId: string): LecturePlanService {
-		const lp = this._lecturePlans.get(courseId);
-		if (!lp) throw new Error(`No lecture plan for course ${courseId}`);
+	getLecturePlans(courseId: string): LecturePlansService {
+		const lp = this._lecturePlansServices.get(courseId);
+		if (!lp) throw new Error(`No lecture plans for course ${courseId}`);
 		return lp;
 	}
 
@@ -153,7 +201,7 @@ export class CourseService {
 		const current = this._mf.get();
 		await this._mf.set({ courses: [...current.courses, course] });
 		await this._ensureJournal(course.id);
-		await this._ensureLecturePlan(course.id);
+		await this._ensureLecturePlans(course.id);
 		return course;
 	}
 
@@ -190,14 +238,17 @@ export class CourseService {
 		await fsp.unlink(journalPath).catch(() => {});
 		await fsp.unlink(journalPath + '.checkpoint.json').catch(() => {});
 
-		const lp = this._lecturePlans.get(id);
+		const lp = this._lecturePlansServices.get(id);
 		if (lp) {
 			await lp.close();
-			this._lecturePlans.delete(id);
+			this._lecturePlansServices.delete(id);
 		}
-		const lecturePlanPath = this._lecturePlanPath(id);
-		await fsp.unlink(lecturePlanPath).catch(() => {});
-		await fsp.unlink(lecturePlanPath + '.checkpoint.json').catch(() => {});
+		const lecturePlansPath = this._lecturePlansPath(id);
+		await fsp.unlink(lecturePlansPath).catch(() => {});
+		await fsp.unlink(lecturePlansPath + '.checkpoint.json').catch(() => {});
+		const legacyPath = this._legacyLecturePlanPath(id);
+		await fsp.unlink(legacyPath + '.migrated').catch(() => {});
+		await fsp.unlink(legacyPath + '.checkpoint.json.migrated').catch(() => {});
 
 		return true;
 	}
@@ -207,7 +258,7 @@ export class CourseService {
 		if (!source) return null;
 		const sourceJournal = this.getJournal(id);
 		const sourcePages = sourceJournal.getAll();
-		const sourcePlan = this.getLecturePlan(id).getPlan();
+		const sourcePlans = this.getLecturePlans(id).getAll();
 		const newCourse = await this.create({ title: `${source.title} (Copy)` });
 		const newJournal = this.getJournal(newCourse.id);
 		for (const page of sourcePages) {
@@ -215,9 +266,12 @@ export class CourseService {
 			const { id: _id, createdAt: _c, updatedAt: _u, ...rest } = page;
 			await newJournal.create(resetPageState(rest) as { type: Page['type']; title: string } & Record<string, unknown>);
 		}
-		const clonedPlan: LecturePlan = {
-			meetingDays: [...sourcePlan.meetingDays],
-			weeks: sourcePlan.weeks.map(
+		const clonedPlans: LecturePlan[] = sourcePlans.map((plan) => ({
+			...plan,
+			id: randomUUID(),
+			createdAt: now(),
+			updatedAt: now(),
+			weeks: plan.weeks.map(
 				(week): LectureWeek => ({
 					id: randomUUID(),
 					days: {
@@ -229,8 +283,8 @@ export class CourseService {
 					}
 				})
 			)
-		};
-		await this.getLecturePlan(newCourse.id).replacePlan(clonedPlan);
+		}));
+		await this.getLecturePlans(newCourse.id).replaceAll(clonedPlans);
 		return newCourse;
 	}
 }

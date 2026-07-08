@@ -204,4 +204,77 @@ describe('CourseService', () => {
 			assert.equal((copyPages[0] as any).content, '<p>Hello</p>');
 		});
 	});
+
+	describe('legacy lecture plan migration', () => {
+		it('migrates an existing singleton file into one named plan on first load, and renames (not deletes) the legacy file', async () => {
+			const course = await service.create({ title: 'Legacy Course' });
+			await service.flush();
+			await service.close();
+
+			// Simulate a pre-existing production lecture-plan.json from
+			// before named/multi-instance plans existed.
+			const legacyPath = path.join(baseDir, 'courses', `${course.id}.lecture-plan.json`);
+			await fsp.mkdir(path.dirname(legacyPath), { recursive: true });
+			const legacyData = {
+				lecturePlan: {
+					meetingDays: ['mon', 'wed'],
+					weeks: [
+						{
+							id: 'week-1',
+							days: {
+								mon: [{ id: 'card-1', durationHours: 1.5, topics: 'Intro' }],
+								tue: [],
+								wed: [],
+								thu: [],
+								fri: []
+							}
+						}
+					]
+				}
+			};
+			await fsp.writeFile(legacyPath, JSON.stringify(legacyData, null, 4));
+
+			const service2 = new CourseService(baseDir);
+			await service2.load();
+			try {
+				const plans = service2.getLecturePlans(course.id).getAll();
+				assert.equal(plans.length, 1);
+				assert.equal(plans[0].title, 'Weekly Lecture Plan');
+				assert.deepEqual(plans[0].meetingDays, ['mon', 'wed']);
+				assert.equal(plans[0].weeks[0].days.mon[0].topics, 'Intro');
+
+				// Legacy file is renamed, not deleted or left in place — a real
+				// file must exist at the original path or `.access` throws.
+				await assert.rejects(fsp.access(legacyPath));
+				await fsp.access(legacyPath + '.migrated');
+			} finally {
+				await service2.close();
+			}
+		});
+
+		it('does not re-migrate or resurrect a deleted planner on a later load', async () => {
+			const course = await service.create({ title: 'Course' });
+			await service.flush();
+			await service.close();
+
+			const legacyPath = path.join(baseDir, 'courses', `${course.id}.lecture-plan.json`);
+			await fsp.mkdir(path.dirname(legacyPath), { recursive: true });
+			await fsp.writeFile(legacyPath, JSON.stringify({ lecturePlan: { meetingDays: [], weeks: [] } }));
+
+			const service2 = new CourseService(baseDir);
+			await service2.load();
+			const migrated = service2.getLecturePlans(course.id).getAll()[0];
+			await service2.getLecturePlans(course.id).remove(migrated.id); // user deletes their only planner
+			await service2.flush();
+			await service2.close();
+
+			const service3 = new CourseService(baseDir);
+			await service3.load();
+			try {
+				assert.deepEqual(service3.getLecturePlans(course.id).getAll(), []);
+			} finally {
+				await service3.close();
+			}
+		});
+	});
 });

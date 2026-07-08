@@ -8,7 +8,14 @@ function card(id: string, durationHours = 1) {
 }
 
 function plan(weeks: LecturePlan['weeks']): LecturePlan {
-	return { meetingDays: [], weeks };
+	return {
+		id: 'plan-1',
+		title: 'Test Plan',
+		createdAt: '2026-01-01T00:00:00.000Z',
+		updatedAt: '2026-01-01T00:00:00.000Z',
+		meetingDays: [],
+		weeks
+	};
 }
 
 describe('emptyDayCards', () => {

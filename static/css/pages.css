@@ -36,58 +36,6 @@
     letter-spacing: 0.02em;
 }
 
-/* ── Table of Contents ──────────────────────────────────────────────────────── */
-.toc-body {
-    max-width: 520px;
-}
-
-.toc-section {
-    margin-bottom: 36px;
-}
-
-.toc-section-title {
-    font-size: 20px;
-    font-weight: 700;
-    letter-spacing: 0.01em;
-    margin-bottom: 12px;
-}
-
-.toc-list {
-    list-style: none;
-    display: flex;
-    flex-direction: column;
-    gap: 7px;
-}
-
-.toc-list li {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.toc-list li::before {
-    content: '•';
-    color: var(--clr-text-muted);
-    flex-shrink: 0;
-}
-
-.toc-link {
-    color: #7ab8f5;
-    font-size: 15px;
-    text-decoration: none;
-    transition: color var(--transition);
-}
-
-.toc-link:hover {
-    color: #aad3ff;
-    text-decoration: underline;
-}
-
-.toc-empty {
-    color: var(--clr-text-muted);
-    font-size: 14px;
-}
-
 /* ── Utility states ─────────────────────────────────────────────────────────── */
 .page-loading {
     color: var(--clr-text-muted);
