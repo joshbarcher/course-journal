@@ -25,5 +25,8 @@ Thumbs.db
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 
+# Coverage (committed snapshot is NOT ignored)
+/coverage/
+
 # Local scratch data snapshot (see verification scripts)
 data/

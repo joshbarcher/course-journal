@@ -29,7 +29,8 @@ export default defineConfig(({ mode }) => {
 		server: { port, strictPort: Boolean(port) },
 		preview: { port, strictPort: Boolean(port) },
 		test: {
-			environment: 'node'
+			environment: 'node',
+			coverage: { provider: 'v8', reporter: ['text', 'html', 'json-summary'] }
 		}
 	};
 });
