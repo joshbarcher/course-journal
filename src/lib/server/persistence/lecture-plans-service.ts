@@ -180,6 +180,12 @@ export class LecturePlansService {
 	async moveCard(planId: string, cardId: string, target: MoveCardTarget): Promise<boolean> {
 		const plan = this.getById(planId);
 		if (!plan || !findCard(plan, cardId)) return false;
+		// The target week must exist too, or the move is a silent no-op:
+		// the pure moveCard() helper returns the plan unchanged when the
+		// target week id isn't found, and reporting success here would let
+		// the route reply 200 for a move that never happened (its 404
+		// contract explicitly covers "target week not found").
+		if (!plan.weeks.some((w) => w.id === target.weekId)) return false;
 		await this._mutatePlan(planId, (p) => moveCard(p, cardId, target));
 		return true;
 	}

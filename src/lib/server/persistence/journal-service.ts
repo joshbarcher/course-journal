@@ -63,11 +63,15 @@ export class JournalService {
 	async create(data: { type: PageType; title: string } & Record<string, unknown>): Promise<Page> {
 		const { type, title, ...rest } = data;
 		const page = {
-			id: randomUUID(),
 			type,
 			title,
 			...typeDefaults(type),
 			...rest,
+			// id/createdAt/updatedAt are stamped AFTER ...rest so a client can
+			// never override them via an extra body field: a caller-chosen id
+			// would let two pages share one id (breaking getById/update/delete
+			// and losing a page on the next reorder).
+			id: randomUUID(),
 			createdAt: now(),
 			updatedAt: now()
 		} as Page;
@@ -100,8 +104,15 @@ export class JournalService {
 	async reorder(ids: string[]): Promise<void> {
 		const current = this._mf.get();
 		const map = new Map(current.pages.map((p) => [p.id, p]));
-		const reordered = ids.map((id) => map.get(id)).filter((p): p is Page => Boolean(p));
-		const rest = current.pages.filter((p) => !ids.includes(p.id));
+		// Dedupe incoming ids before mapping: a repeated id would otherwise
+		// resolve to the same page twice and duplicate it in the stored array
+		// (the persisted `pages` list has no id-uniqueness constraint).
+		const seen = new Set<string>();
+		const reordered = ids
+			.filter((id) => (seen.has(id) ? false : (seen.add(id), true)))
+			.map((id) => map.get(id))
+			.filter((p): p is Page => Boolean(p));
+		const rest = current.pages.filter((p) => !seen.has(p.id));
 		await this._mf.set({ pages: [...reordered, ...rest] });
 	}
 }
