@@ -1,27 +1,27 @@
 {
   "version": 1,
-  "generatedAt": "2026-07-09T20:43:27.825Z",
+  "generatedAt": "2026-07-16T22:02:21.804Z",
   "source": "coverage-summary",
   "totals": {
     "lines": {
-      "total": 805,
-      "covered": 531,
-      "pct": 65.96
+      "total": 838,
+      "covered": 666,
+      "pct": 79.47
     },
     "statements": {
-      "total": 959,
-      "covered": 606,
-      "pct": 63.19
+      "total": 996,
+      "covered": 779,
+      "pct": 78.21
     },
     "functions": {
-      "total": 256,
-      "covered": 157,
-      "pct": 61.33
+      "total": 265,
+      "covered": 208,
+      "pct": 78.49
     },
     "branches": {
-      "total": 443,
-      "covered": 235,
-      "pct": 53.05
+      "total": 460,
+      "covered": 324,
+      "pct": 70.43
     }
   },
   "files": {
@@ -67,6 +67,28 @@
         "total": 32,
         "covered": 4,
         "pct": 12.5
+      }
+    },
+    "src/lib/schemas/api.ts": {
+      "lines": {
+        "total": 14,
+        "covered": 14,
+        "pct": 100
+      },
+      "statements": {
+        "total": 14,
+        "covered": 14,
+        "pct": 100
+      },
+      "functions": {
+        "total": 2,
+        "covered": 2,
+        "pct": 100
+      },
+      "branches": {
+        "total": 3,
+        "covered": 3,
+        "pct": 100
       }
     },
     "src/lib/schemas/course.ts": {
@@ -182,111 +204,133 @@
     "src/lib/server/persistence/course-service.ts": {
       "lines": {
         "total": 134,
-        "covered": 123,
-        "pct": 91.79
+        "covered": 125,
+        "pct": 93.28
       },
       "statements": {
         "total": 147,
-        "covered": 133,
-        "pct": 90.48
+        "covered": 138,
+        "pct": 93.88
       },
       "functions": {
         "total": 47,
-        "covered": 37,
-        "pct": 78.72
+        "covered": 41,
+        "pct": 87.23
       },
       "branches": {
         "total": 42,
-        "covered": 30,
-        "pct": 71.43
+        "covered": 31,
+        "pct": 73.81
       }
     },
     "src/lib/server/persistence/journal-service.ts": {
       "lines": {
-        "total": 35,
-        "covered": 30,
-        "pct": 85.71
+        "total": 39,
+        "covered": 39,
+        "pct": 100
       },
       "statements": {
-        "total": 45,
-        "covered": 36,
-        "pct": 80
+        "total": 47,
+        "covered": 47,
+        "pct": 100
       },
       "functions": {
-        "total": 22,
-        "covered": 17,
-        "pct": 77.27
+        "total": 23,
+        "covered": 23,
+        "pct": 100
       },
       "branches": {
-        "total": 6,
-        "covered": 6,
+        "total": 8,
+        "covered": 8,
         "pct": 100
       }
     },
     "src/lib/server/persistence/lecture-plans-service.ts": {
       "lines": {
-        "total": 83,
-        "covered": 71,
-        "pct": 85.54
+        "total": 84,
+        "covered": 83,
+        "pct": 98.81
       },
       "statements": {
-        "total": 108,
-        "covered": 85,
-        "pct": 78.7
+        "total": 111,
+        "covered": 104,
+        "pct": 93.69
       },
       "functions": {
-        "total": 40,
-        "covered": 33,
-        "pct": 82.5
+        "total": 41,
+        "covered": 39,
+        "pct": 95.12
       },
       "branches": {
-        "total": 40,
-        "covered": 27,
-        "pct": 67.5
+        "total": 42,
+        "covered": 36,
+        "pct": 85.71
       }
     },
     "src/lib/server/persistence/managed-file.ts": {
       "lines": {
         "total": 239,
-        "covered": 126,
-        "pct": 52.72
+        "covered": 179,
+        "pct": 74.9
       },
       "statements": {
         "total": 262,
-        "covered": 132,
-        "pct": 50.38
+        "covered": 192,
+        "pct": 73.28
       },
       "functions": {
         "total": 45,
-        "covered": 19,
-        "pct": 42.22
+        "covered": 29,
+        "pct": 64.44
       },
       "branches": {
         "total": 136,
-        "covered": 67,
-        "pct": 49.26
+        "covered": 102,
+        "pct": 75
+      }
+    },
+    "src/lib/server/validate.ts": {
+      "lines": {
+        "total": 7,
+        "covered": 7,
+        "pct": 100
+      },
+      "statements": {
+        "total": 8,
+        "covered": 8,
+        "pct": 100
+      },
+      "functions": {
+        "total": 2,
+        "covered": 2,
+        "pct": 100
+      },
+      "branches": {
+        "total": 2,
+        "covered": 2,
+        "pct": 100
       }
     },
     "src/lib/utils/format.ts": {
       "lines": {
         "total": 38,
-        "covered": 7,
-        "pct": 18.42
+        "covered": 38,
+        "pct": 100
       },
       "statements": {
         "total": 57,
-        "covered": 10,
-        "pct": 17.54
+        "covered": 56,
+        "pct": 98.25
       },
       "functions": {
         "total": 21,
-        "covered": 3,
-        "pct": 14.29
+        "covered": 21,
+        "pct": 100
       },
       "branches": {
         "total": 44,
-        "covered": 5,
-        "pct": 11.36
+        "covered": 34,
+        "pct": 77.27
       }
     },
     "src/lib/utils/lecture-plan-helpers.ts": {
@@ -331,6 +375,28 @@
         "total": 4,
         "covered": 3,
         "pct": 75
+      }
+    },
+    "src/lib/utils/nav-category.ts": {
+      "lines": {
+        "total": 7,
+        "covered": 7,
+        "pct": 100
+      },
+      "statements": {
+        "total": 10,
+        "covered": 10,
+        "pct": 100
+      },
+      "functions": {
+        "total": 3,
+        "covered": 3,
+        "pct": 100
+      },
+      "branches": {
+        "total": 8,
+        "covered": 8,
+        "pct": 100
       }
     },
     "src/lib/utils/page-helpers.ts": {
