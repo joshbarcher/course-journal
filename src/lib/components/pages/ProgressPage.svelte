@@ -95,7 +95,7 @@
 	}
 </script>
 
-<PageTitleHeader {courseId} {page} subtitle="Progress Tracker" />
+<PageTitleHeader {courseId} {page} subtitle="Progress Tracker" record={() => ({ ...page, tasks, notes })} />
 
 <GlobalProgressBar {segments} emptyLabel="No tasks yet" fallbackPrefix="Task" />
 

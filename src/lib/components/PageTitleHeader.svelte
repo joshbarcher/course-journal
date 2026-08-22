@@ -5,12 +5,15 @@
 	// old code) is wired up once the sidebar exists (M4) — for now a rename
 	// just persists.
 	import { updatePage } from '$lib/api-client';
+	import { showExportMenu } from '$lib/export-menu';
+	import type { Exportable } from '$lib/utils/export-page';
 
 	let {
 		courseId,
 		page,
 		subtitle,
 		onSave,
+		record,
 		children
 	}: {
 		courseId: string;
@@ -20,6 +23,12 @@
 		// reuse the same editable-title UI for a non-page record (e.g. a
 		// named lecture plan) that persists its title differently.
 		onSave?: (title: string) => Promise<unknown>;
+		// Supplying this adds the Export button. It's a getter, not the
+		// record itself, because every page component keeps the live edited
+		// copy in local $state — reading it at click time is what makes the
+		// export match what's on screen, including changes whose debounced
+		// save hasn't fired yet.
+		record?: () => Exportable;
 		children?: import('svelte').Snippet;
 	} = $props();
 
@@ -52,14 +61,23 @@
 </script>
 
 <div class="page-header">
-	<h1
-		bind:this={titleEl}
-		class="page-title page-title--editable"
-		contenteditable="true"
-		aria-label="Page title"
-		onkeydown={onKeydown}
-		onblur={onBlur}
-	>{title}</h1>
+	<div class="page-header-top">
+		<h1
+			bind:this={titleEl}
+			class="page-title page-title--editable"
+			contenteditable="true"
+			aria-label="Page title"
+			onkeydown={onKeydown}
+			onblur={onBlur}
+		>{title}</h1>
+		{#if record}
+			<button
+				class="page-export-btn"
+				title="Copy or download this page as Markdown or plain text"
+				onclick={(e) => showExportMenu(e, record)}
+			>Export</button>
+		{/if}
+	</div>
 	{#if subtitle}<p class="page-subtitle">{subtitle}</p>{/if}
 	{@render children?.()}
 </div>

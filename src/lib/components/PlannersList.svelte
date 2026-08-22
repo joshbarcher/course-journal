@@ -3,6 +3,7 @@
 	import { createLecturePlan, removeLecturePlan, renameLecturePlan } from '$lib/api-client';
 	import { inputDialog, confirmDialog, showError } from '$lib/dialogs';
 	import { showContextMenu, type ContextMenuItem } from '$lib/context-menu';
+	import { exportSubmenu } from '$lib/export-menu';
 	import { WEEKDAYS, type LecturePlan } from '$lib/schemas/lecture-plan';
 
 	let { courseId, plans: initialPlans }: { courseId: string; plans: LecturePlan[] } = $props();
@@ -43,6 +44,8 @@
 					}
 				}
 			},
+			'separator',
+			exportSubmenu(() => plan),
 			'separator',
 			{
 				label: 'Delete',

@@ -174,7 +174,7 @@
 	}
 </script>
 
-<PageTitleHeader {courseId} {page} subtitle="Multi-Bar Progress Tracker" />
+<PageTitleHeader {courseId} {page} subtitle="Multi-Bar Progress Tracker" record={() => ({ ...page, bars, notes })} />
 
 <GlobalProgressBar {segments} emptyLabel="No bars yet" fallbackPrefix="Bar" />
 

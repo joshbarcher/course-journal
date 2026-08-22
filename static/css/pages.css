@@ -3,6 +3,35 @@
     margin-bottom: 40px;
 }
 
+/* Keeps the Export button on the title's baseline without letting a long
+   title push it off the row — the title wraps, the button doesn't. */
+.page-header-top {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.page-export-btn {
+    flex-shrink: 0;
+    margin-bottom: 8px;
+    padding: 6px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: var(--clr-text-muted);
+    background: var(--clr-bg-raised);
+    border: 1px solid var(--clr-border);
+    border-radius: var(--radius);
+    transition: color var(--transition), border-color var(--transition), background var(--transition);
+}
+
+.page-export-btn:hover {
+    color: var(--clr-text);
+    background: var(--clr-bg-hover);
+    border-color: var(--clr-border-hi);
+}
+
 .page-title {
     font-family: var(--font-title);
     font-size: 42px;

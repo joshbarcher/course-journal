@@ -112,6 +112,7 @@
 	page={{ id: plan.id, title: plan.title }}
 	subtitle="(Weekly Lecture Plan)"
 	onSave={(title) => renameLecturePlan(courseId, plan.id, title)}
+	record={() => plan}
 />
 
 <div class="lecture-plan-toolbar">

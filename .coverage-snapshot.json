@@ -1,27 +1,27 @@
 {
   "version": 1,
-  "generatedAt": "2026-07-16T22:02:21.804Z",
+  "generatedAt": "2026-08-22T21:38:21.528Z",
   "source": "coverage-summary",
   "totals": {
     "lines": {
-      "total": 838,
-      "covered": 666,
-      "pct": 79.47
+      "total": 1126,
+      "covered": 952,
+      "pct": 84.55
     },
     "statements": {
-      "total": 996,
-      "covered": 779,
-      "pct": 78.21
+      "total": 1340,
+      "covered": 1110,
+      "pct": 82.84
     },
     "functions": {
-      "total": 265,
-      "covered": 208,
-      "pct": 78.49
+      "total": 336,
+      "covered": 279,
+      "pct": 83.04
     },
     "branches": {
-      "total": 460,
-      "covered": 324,
-      "pct": 70.43
+      "total": 769,
+      "covered": 587,
+      "pct": 76.33
     }
   },
   "files": {
@@ -311,6 +311,28 @@
         "pct": 100
       }
     },
+    "src/lib/utils/export-page.ts": {
+      "lines": {
+        "total": 133,
+        "covered": 131,
+        "pct": 98.5
+      },
+      "statements": {
+        "total": 154,
+        "covered": 150,
+        "pct": 97.4
+      },
+      "functions": {
+        "total": 38,
+        "covered": 38,
+        "pct": 100
+      },
+      "branches": {
+        "total": 130,
+        "covered": 105,
+        "pct": 80.77
+      }
+    },
     "src/lib/utils/format.ts": {
       "lines": {
         "total": 38,
@@ -331,6 +353,28 @@
         "total": 44,
         "covered": 34,
         "pct": 77.27
+      }
+    },
+    "src/lib/utils/html-to-text.ts": {
+      "lines": {
+        "total": 155,
+        "covered": 155,
+        "pct": 100
+      },
+      "statements": {
+        "total": 190,
+        "covered": 181,
+        "pct": 95.26
+      },
+      "functions": {
+        "total": 33,
+        "covered": 33,
+        "pct": 100
+      },
+      "branches": {
+        "total": 179,
+        "covered": 158,
+        "pct": 88.27
       }
     },
     "src/lib/utils/lecture-plan-helpers.ts": {

@@ -68,7 +68,7 @@
 	}
 </script>
 
-<PageTitleHeader {courseId} {page} subtitle="(Note)" />
+<PageTitleHeader {courseId} {page} subtitle="(Note)" record={() => ({ ...page, notes })} />
 
 <div class="notes-input-wrap">
 	<textarea

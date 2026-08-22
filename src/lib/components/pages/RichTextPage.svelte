@@ -224,7 +224,18 @@
 	});
 </script>
 
-<PageTitleHeader {courseId} {page} subtitle="Page · Rich Text" />
+<!--
+  The editor owns its content imperatively (see the component header), so
+  there's no reactive `content` to hand over — the live innerHTML is read
+  at export time instead, which also covers edits the debounced save
+  hasn't flushed yet.
+-->
+<PageTitleHeader
+	{courseId}
+	{page}
+	subtitle="Page · Rich Text"
+	record={() => ({ ...page, content: editorEl?.innerHTML ?? page.content })}
+/>
 
 <div class="rt-toolbar" bind:this={toolbarEl}>
 	{#each TOGGLE_CMDS as { cmd, label, title } (cmd)}

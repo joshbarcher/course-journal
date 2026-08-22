@@ -60,14 +60,27 @@ export function newPageDialog(
 	});
 }
 
-export function showError(message: string): void {
+// Ported from public/js/dialog.js's error toast, with the variant and the
+// dwell time factored out so a success message ("Copied as markdown") can
+// reuse the same element and animation without pretending to be an error.
+function toast(message: string, variant: 'error' | 'info', durationMs: number): void {
 	const el = document.createElement('div');
-	el.className = 'error-toast';
+	el.className = `toast toast--${variant}`;
 	el.textContent = message;
 	document.body.appendChild(el);
-	requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('error-toast--show')));
+	requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('toast--show')));
 	setTimeout(() => {
-		el.classList.remove('error-toast--show');
+		el.classList.remove('toast--show');
 		setTimeout(() => el.remove(), 350);
-	}, 4000);
+	}, durationMs);
+}
+
+export function showError(message: string): void {
+	toast(message, 'error', 4000);
+}
+
+// A confirmation of something that already worked — gone twice as fast as an
+// error, since there's nothing here the user has to read and act on.
+export function showToast(message: string): void {
+	toast(message, 'info', 2000);
 }

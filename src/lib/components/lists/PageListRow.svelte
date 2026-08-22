@@ -8,6 +8,7 @@
 	// to handle on delete — deleting just removes the row from the list.
 	import { goto } from '$app/navigation';
 	import { showContextMenu, type ContextMenuItem } from '$lib/context-menu';
+	import { exportSubmenu } from '$lib/export-menu';
 	import { confirmDialog, showError } from '$lib/dialogs';
 	import { listCourses, createPage, updatePage, removePage } from '$lib/api-client';
 	import { progressPercent } from '$lib/utils/format';
@@ -91,7 +92,11 @@
 				}
 			},
 			'separator',
-			{ label: 'Copy to…', submenu: copyToItems }
+			{ label: 'Copy to…', submenu: copyToItems },
+			// The row's `page` prop is the persisted record, which is exactly
+			// what should be exported from a list view — unlike the open-page
+			// header, there's no unsaved local state here to prefer over it.
+			exportSubmenu(() => page)
 		];
 
 		if (variant === 'tracker') {
